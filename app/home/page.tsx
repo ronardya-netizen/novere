@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation'
 import { PalSVG } from '@/lib/pal-svg'
 
 const PALETTES: Record<string, any> = {
-  ocean:   { main: '#2563EB', accent: '#7DD3FC', glow: 'rgba(37,99,235,.4)'   },
-  fire:    { main: '#EA580C', accent: '#FDE68A', glow: 'rgba(234,88,12,.4)'   },
-  forest:  { main: '#16A34A', accent: '#BBF7D0', glow: 'rgba(22,163,74,.4)'   },
-  cosmic:  { main: '#7C3AED', accent: '#DDD6FE', glow: 'rgba(124,58,237,.4)'  },
-  sunrise: { main: '#DB2777', accent: '#FDE68A', glow: 'rgba(219,39,119,.4)'  },
-  storm:   { main: '#475569', accent: '#BAE6FD', glow: 'rgba(71,85,105,.4)'   },
-  gold:    { main: '#D97706', accent: '#FEF3C7', glow: 'rgba(217,119,6,.4)'   },
-  night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
+  ocean:   { main: '#2563EB', accent: '#7DD3FC', glow: 'rgba(37,99,235,.4)'  },
+  fire:    { main: '#EA580C', accent: '#FDE68A', glow: 'rgba(234,88,12,.4)'  },
+  forest:  { main: '#16A34A', accent: '#BBF7D0', glow: 'rgba(22,163,74,.4)'  },
+  cosmic:  { main: '#7C3AED', accent: '#DDD6FE', glow: 'rgba(124,58,237,.4)' },
+  sunrise: { main: '#DB2777', accent: '#FDE68A', glow: 'rgba(219,39,119,.4)' },
+  storm:   { main: '#475569', accent: '#BAE6FD', glow: 'rgba(71,85,105,.4)'  },
+  gold:    { main: '#D97706', accent: '#FEF3C7', glow: 'rgba(217,119,6,.4)'  },
+  night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'   },
 }
 
 const GREETINGS: Record<string, string[]> = {
@@ -26,86 +26,73 @@ const GREETINGS: Record<string, string[]> = {
 export default function HomePage() {
   const { child, loading } = useChild()
   const router = useRouter()
-  const [points, setPoints]     = useState(0)
-  const [streak, setStreak]     = useState(0)
-  const [sessions, setSessions] = useState(0)
+  const [points, setPoints]         = useState(0)
+  const [streak, setStreak]         = useState(0)
+  const [sessions, setSessions]     = useState(0)
   const [nextMentor, setNextMentor] = useState<any>(null)
   const [articles, setArticles]     = useState<any[]>([])
   const [greeting, setGreeting]     = useState('')
   const [animIn, setAnimIn]         = useState(false)
 
-  const palette  = PALETTES[child?.pal?.palette || 'ocean']
-  const palName  = child?.pal?.name || 'Ton compagnon'
-  const personality = child?.personality || 'curious'
-
+  // Redirect if no child — must be before any early returns
   useEffect(() => {
-    setTimeout(() => setAnimIn(true), 100)
-    if (!child) return
+    if (!loading && !child) {
+      router.push('/onboarding')
+    }
+  }, [child, loading, router])
 
-    // Random greeting based on personality
-    const greetings = GREETINGS[personality] || GREETINGS.curious
+  // Fetch data once child is loaded
+  useEffect(() => {
+    if (!child) return
+    setTimeout(() => setAnimIn(true), 100)
+
+    const greetings = GREETINGS[child.personality] || GREETINGS.curious
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)])
 
-    // Fetch points
     supabase.from('points').select('total').eq('child_id', child.id).single()
       .then(({ data }) => { if (data) setPoints(data.total) })
 
-    // Fetch sessions count
     supabase.from('study_sessions').select('id', { count: 'exact' }).eq('child_id', child.id)
       .then(({ count }) => { if (count) setSessions(count) })
 
-    // Fetch next mentor session
     supabase.from('mentor_sessions')
       .select('*, mentors(name, field)')
       .eq('child_id', child.id)
       .eq('status', 'upcoming')
       .order('scheduled_at', { ascending: true })
       .limit(1)
-      .single()
+      .maybeSingle()
       .then(({ data }) => { if (data) setNextMentor(data) })
 
-    // Fetch recent articles
     supabase.from('news_articles')
       .select('id, title, subject, hero, hero_name')
       .eq('published', true)
       .limit(3)
       .then(({ data }) => { if (data) setArticles(data) })
 
-    // Fake streak for pilot
     setStreak(7)
   }, [child])
 
+  // Loading state
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>
-      <div style={{ animation: 'pulse 1.5s ease-in-out infinite', fontSize: 48 }}>😊</div>
+      <div style={{ fontSize: 48 }}>😊</div>
     </div>
   )
 
-    useEffect(() => {
-      if (!loading && !child) {
-        router.push('/onboarding')
-      }
-    }, [child, loading])
+  // No child yet (redirect in progress)
+  if (!child) return null
 
-    if (loading || !child) return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>
-        <div style={{ animation: 'pulse 1.5s ease-in-out infinite', fontSize: 48 }}>😊</div>
-      </div>
-    )
-
-
-  const hour = new Date().getHours()
-  const timeOfDay = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+  const palette     = PALETTES[child.pal?.palette || 'ocean']
+  const palName     = child.pal?.name || 'Ton compagnon'
+  const hour        = new Date().getHours()
+  const timeOfDay   = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
 
   return (
     <div style={{ minHeight: '100%', background: '#F4F7FF' }}>
 
-      {/* ── HERO HEADER ── */}
-      <div style={{
-        background: `linear-gradient(160deg, #0B1F4B 0%, #13306B 100%)`,
-        padding: '20px 20px 0', position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Dot grid */}
+      {/* HERO HEADER */}
+      <div style={{ background: 'linear-gradient(160deg, #0B1F4B 0%, #13306B 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px)', backgroundSize: '24px 24px', pointerEvents: 'none' }} />
 
         {/* Top row */}
@@ -124,7 +111,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* Stats */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, position: 'relative', zIndex: 2 }}>
           {[
             { icon: '🔥', val: streak.toString(),   label: 'JOURS'    },
@@ -141,12 +128,10 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Pal greeting card */}
+        {/* Pal greeting */}
         <div style={{
-          background: 'rgba(255,255,255,.06)',
-          border: '1px solid rgba(255,255,255,.1)',
-          borderRadius: '20px 20px 0 0',
-          padding: '18px 18px 28px',
+          background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)',
+          borderRadius: '20px 20px 0 0', padding: '18px 18px 28px',
           display: 'flex', alignItems: 'center', gap: 16,
           position: 'relative', zIndex: 2,
           opacity: animIn ? 1 : 0,
@@ -155,86 +140,54 @@ export default function HomePage() {
         }}>
           <div style={{ animation: 'float 3s ease-in-out infinite', flexShrink: 0 }}>
             <PalSVG
-              creature={child.pal.creature}
-              shape={child.pal.bodyShape}
+              creature={child.pal?.creature || 'land'}
+              shape={child.pal?.bodyShape || 'round'}
               palette={palette}
-              feature={child.pal.feature}
+              feature={child.pal?.feature || 'eyes'}
               size={72}
             />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, marginBottom: 5 }}>
-              {palName} dit:
-            </p>
-            <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 15, lineHeight: 1.6 }}>
-              "{greeting}"
-            </p>
+            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, marginBottom: 5 }}>{palName} dit:</p>
+            <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 15, lineHeight: 1.6 }}>"{greeting}"</p>
           </div>
         </div>
       </div>
 
-      {/* ── WHITE CARD BODY ── */}
+      {/* BODY */}
       <div style={{ background: '#F4F7FF', padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
         {/* Daily Quest */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>
-              Quête du jour ⚡
-            </h2>
-            <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
-              Voir tout →
-            </button>
+            <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>Quête du jour ⚡</h2>
+            <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout →</button>
           </div>
-
-          <div
-            onClick={() => router.push('/home/ask')}
-            style={{
-              background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`,
-              borderRadius: 20, padding: '18px 20px', cursor: 'pointer',
-              position: 'relative', overflow: 'hidden',
-            }}
-          >
+          <div onClick={() => router.push('/home/ask')} style={{ background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`, borderRadius: 20, padding: '18px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -20, fontSize: 90, opacity: .07 }}>⚡</div>
-            <p style={{ color: 'rgba(255,255,255,.45)', fontSize: 11, fontWeight: 700, letterSpacing: '.07em', marginBottom: 8 }}>
-              REPRENDRE AVEC {palName.toUpperCase()}
-            </p>
-            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 18, marginBottom: 14 }}>
-              Continue ton exploration! 🎯
-            </h3>
+            <p style={{ color: 'rgba(255,255,255,.45)', fontSize: 11, fontWeight: 700, letterSpacing: '.07em', marginBottom: 8 }}>REPRENDRE AVEC {palName.toUpperCase()}</p>
+            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 18, marginBottom: 14 }}>Continue ton exploration! 🎯</h3>
             <div style={{ height: 6, background: 'rgba(255,255,255,.12)', borderRadius: 99, marginBottom: 10 }}>
               <div style={{ height: '100%', width: '65%', background: '#FBBF24', borderRadius: 99 }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>65% complété</span>
-              <div style={{ background: '#FBBF24', color: '#0B1F4B', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 800 }}>
-                Continuer →
-              </div>
+              <div style={{ background: '#FBBF24', color: '#0B1F4B', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 800 }}>Continuer →</div>
             </div>
           </div>
         </div>
 
-        {/* Recent articles */}
-        {articles.length > 0 && (
+        {/* Articles */}
+        {articles.length > 0 ? (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>
-                Dernières quêtes ✨
-              </h2>
-              <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
-                Voir tout →
-              </button>
+              <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>Dernières quêtes ✨</h2>
+              <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout →</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {articles.map(a => (
-                <div key={a.id} onClick={() => router.push('/home/quests')} style={{
-                  background: '#fff', borderRadius: 18, padding: '14px 16px',
-                  border: '1.5px solid #E2E8F0', display: 'flex', gap: 12,
-                  alignItems: 'center', cursor: 'pointer',
-                }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
-                    {a.hero || '🦸'}
-                  </div>
+                <div key={a.id} onClick={() => router.push('/home/quests')} style={{ background: '#fff', borderRadius: 18, padding: '14px 16px', border: '1.5px solid #E2E8F0', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{a.hero || '🦸'}</div>
                   <div style={{ flex: 1 }}>
                     <span style={{ background: '#DBEAFE', color: '#2563EB', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{a.subject}</span>
                     <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 5 }}>{a.title}</p>
@@ -245,10 +198,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        )}
-
-        {/* No articles yet */}
-        {articles.length === 0 && (
+        ) : (
           <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
             <p style={{ fontSize: 32, marginBottom: 8 }}>🦸</p>
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>Les quêtes arrivent bientôt!</p>
@@ -256,26 +206,18 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Next mentor session */}
+        {/* Mentor */}
         <div>
-          <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>
-            Prochain mentor 🔮
-          </h2>
+          <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Prochain mentor 🔮</h2>
           {nextMentor ? (
             <div style={{ background: '#EFF6FF', borderRadius: 20, padding: '16px', border: '1.5px solid #BFDBFE', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>
-                🌟
-              </div>
+              <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>🌟</div>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{nextMentor.mentors?.name}</p>
                 <p style={{ color: '#2563EB', fontSize: 13, fontWeight: 600 }}>{nextMentor.mentors?.field}</p>
-                <p style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>
-                  {new Date(nextMentor.scheduled_at).toLocaleString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <p style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>{new Date(nextMentor.scheduled_at).toLocaleString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              <div style={{ background: '#2563EB', color: '#fff', borderRadius: 12, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-                Rejoindre
-              </div>
+              <div style={{ background: '#2563EB', color: '#fff', borderRadius: 12, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Rejoindre</div>
             </div>
           ) : (
             <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
@@ -289,14 +231,8 @@ export default function HomePage() {
       </div>
 
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-8px); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: .4; }
-        }
+        @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
       `}</style>
     </div>
   )

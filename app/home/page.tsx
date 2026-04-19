@@ -81,10 +81,18 @@ export default function HomePage() {
     </div>
   )
 
-  if (!child) {
-    router.push('/onboarding')
-    return null
-  }
+    useEffect(() => {
+      if (!loading && !child) {
+        router.push('/onboarding')
+      }
+    }, [child, loading])
+
+    if (loading || !child) return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>
+        <div style={{ animation: 'pulse 1.5s ease-in-out infinite', fontSize: 48 }}>😊</div>
+      </div>
+    )
+
 
   const hour = new Date().getHours()
   const timeOfDay = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'

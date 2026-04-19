@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { PalSVG } from '@/lib/PalSVG'
+import { PalSVG } from '@/lib/pal-svg'
 
 const PALETTES: Record<string, any> = {
   ocean:   { main: '#2563EB', accent: '#7DD3FC', glow: 'rgba(37,99,235,.4)'   },

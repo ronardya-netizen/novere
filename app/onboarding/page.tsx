@@ -173,29 +173,39 @@ export default function OnboardingPage() {
     }
   }, [step, palName])
 
-  const finish = async () => {
-    setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth'); return }
+ const finish = async () => {
+  setSaving(true)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) { router.push('/auth'); return }
 
-    const palData = { creature, bodyShape, palette: paletteId, feature, name: palName }
+  const palData = { creature, bodyShape, palette: paletteId, feature, name: palName }
 
-    const { error } = await supabase.from('children').insert({
-      parent_id:   user.id,
-      name:        childName,
-      grade,
-      hero:        '🦸',
-      hero_name:   palName,
-      pal:         palData,
-      personality,
-    })
+  const { error } = await supabase.from('children').insert({
+    parent_id:   user.id,
+    name:        childName,
+    grade,
+    hero:        '🦸',
+    hero_name:   palName,
+    pal:         palData,
+    personality,
+  })
 
-    if (!error) {
-      await refresh()
-      router.push('/home')
+  if (!error) {
+    try {
+      await Promise.race([
+        refresh(),
+        new Promise(resolve => setTimeout(resolve, 3000))
+      ])
+    } catch (e) {
+      console.log('refresh error', e)
     }
-    setSaving(false)
+    router.push('/home')
+  } else {
+    console.error('Insert error:', error)
   }
+  setSaving(false)
+}
+
 
   return (
     <div style={{

@@ -61,6 +61,18 @@ const POMODORO = 25 * 60
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} style={{ color: '#FBBF24', fontWeight: 800 }}>{part.slice(2, -2)}</strong>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
+
+
 export default function AskPage() {
   const { child }  = useChild()
   const { lang }   = useLang()
@@ -416,7 +428,7 @@ export default function AskPage() {
               fontSize: 14, lineHeight: 1.6,
               fontWeight: msg.role === 'user' ? 600 : 400,
             }}>
-              {msg.content}
+              {renderMarkdown(msg.content)}
             </div>
           </div>
         ))}

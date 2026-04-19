@@ -19,10 +19,10 @@ const PALETTES: Record<string, any> = {
 const SUBJECTS = ['Mathématiques', 'Français', 'Sciences', 'Histoire', 'Anglais', 'Finances', 'Autre']
 
 const TECHNIQUES = [
-  { id: 'socratic',  labelFr: 'Socratique',    labelCr: 'Sokrat',    icon: '🔍', descFr: 'Découvre par toi-même',     descCr: 'Dekouvri pou kont ou'   },
-  { id: 'feynman',   labelFr: 'Feynman',        labelCr: 'Feynman',   icon: '🧠', descFr: 'Explique comme un prof',    descCr: 'Eksplike tankou pwofesè' },
-  { id: 'recall',    labelFr: 'Rappel actif',   labelCr: 'Souvni',    icon: '💡', descFr: 'Teste ta mémoire',          descCr: 'Teste memwa ou'          },
-  { id: 'pomodoro',  labelFr: 'Pomodoro',       labelCr: 'Pomodoro',  icon: '⏱️', descFr: 'Focus 25 minutes',          descCr: 'Fokis 25 minit'          },
+  { id: 'socratic',  labelFr: 'Socratique',  labelCr: 'Sokrat',  icon: '🔍', descFr: 'Découvre par toi-même',   descCr: 'Dekouvri pou kont ou'   },
+  { id: 'feynman',   labelFr: 'Feynman',      labelCr: 'Feynman', icon: '🧠', descFr: 'Explique comme un prof',  descCr: 'Eksplike tankou pwofesè' },
+  { id: 'recall',    labelFr: 'Rappel actif', labelCr: 'Souvni',  icon: '💡', descFr: 'Teste ta mémoire',        descCr: 'Teste memwa ou'          },
+  { id: 'pomodoro',  labelFr: 'Pomodoro',     labelCr: 'Pomodoro',icon: '⏱️', descFr: 'Focus 25 minutes',        descCr: 'Fokis 25 minit'          },
 ]
 
 const MUSIC: Record<string, { url: string; label: string }> = {
@@ -35,16 +35,14 @@ const MUSIC: Record<string, { url: string; label: string }> = {
 const T = {
   fr: {
     title: 'Demande à', subtitle: 'Choisis un sujet et une technique',
-    subject: 'Matière', technique: 'Technique d\'étude',
+    subject: 'Matière', technique: "Technique d'étude",
     startSession: 'Commencer la session →',
     typeMessage: 'Pose ta question...',
     endSession: 'Terminer la session',
     sessionSaved: 'Session sauvegardée! +',
     points: 'pts ⭐',
     pomodoroLabel: 'Focus',
-    breakLabel: 'Pause',
     musicLabel: 'Musique de focus',
-    thinking: 'réfléchit...',
   },
   cr: {
     title: 'Mande', subtitle: 'Chwazi yon sijè ak yon teknik',
@@ -55,39 +53,36 @@ const T = {
     sessionSaved: 'Sesyon sove! +',
     points: 'pwen ⭐',
     pomodoroLabel: 'Fokis',
-    breakLabel: 'Repo',
     musicLabel: 'Mizik fokis',
-    thinking: 'ap réfléchi...',
   }
 }
+
+const POMODORO = 25 * 60
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
 export default function AskPage() {
-  const { child }   = useChild()
-  const { lang }    = useLang()
-  const t           = T[lang]
-  const chatEndRef  = useRef<HTMLDivElement>(null)
+  const { child }  = useChild()
+  const { lang }   = useLang()
+  const t          = T[lang]
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [phase, setPhase]           = useState<'setup' | 'chat'>('setup')
-  const [subject, setSubject]       = useState(SUBJECTS[0])
-  const [technique, setTechnique]   = useState('socratic')
-  const [messages, setMessages]     = useState<Message[]>([])
-  const [input, setInput]           = useState('')
-  const [loading, setLoading]       = useState(false)
+  const [phase, setPhase]             = useState<'setup' | 'chat'>('setup')
+  const [subject, setSubject]         = useState(SUBJECTS[0])
+  const [technique, setTechnique]     = useState('socratic')
+  const [messages, setMessages]       = useState<Message[]>([])
+  const [input, setInput]             = useState('')
+  const [loading, setLoading]         = useState(false)
   const [sessionStart, setSessionStart] = useState<Date | null>(null)
-  const [elapsed, setElapsed]       = useState(0)
-  const [showMusic, setShowMusic]   = useState(false)
-  const [isWide, setIsWide]         = useState(false)
-  const [ptsEarned, setPtsEarned]   = useState(0)
+  const [elapsed, setElapsed]         = useState(0)
+  const [showMusic, setShowMusic]     = useState(false)
+  const [isWide, setIsWide]           = useState(false)
+  const [ptsEarned, setPtsEarned]     = useState(0)
   const [sessionDone, setSessionDone] = useState(false)
 
-  // Pomodoro
-  const POMODORO = 25 * 60
   const pomodoroLeft = Math.max(0, POMODORO - elapsed)
   const pomodoroMins = String(Math.floor(pomodoroLeft / 60)).padStart(2, '0')
   const pomodoroSecs = String(pomodoroLeft % 60).padStart(2, '0')
-  const isPomodoro   = technique === 'pomodoro'
 
   useEffect(() => {
     const check = () => setIsWide(window.innerWidth >= 768)
@@ -100,7 +95,6 @@ export default function AskPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Session timer
   useEffect(() => {
     if (!sessionStart) return
     const interval = setInterval(() => {
@@ -117,12 +111,12 @@ export default function AskPage() {
 
   const startSession = () => {
     const greeting = lang === 'fr'
-      ? `Bonjour! Je suis ${palName}, ton compagnon d'apprentissage. On travaille sur **${subject}** aujourd'hui avec la technique **${TECHNIQUES.find(t => t.id === technique)?.labelFr}**. Qu'est-ce qu'on explore? 🎯`
+      ? `Bonjour! Je suis ${palName}, ton compagnon d'apprentissage. On travaille sur **${subject}** aujourd'hui avec la technique **${TECHNIQUES.find(tech => tech.id === technique)?.labelFr}**. Qu'est-ce qu'on explore? 🎯`
       : `Bonjou! Mwen se ${palName}, konpayon aprantisaj ou. Nou ap travay sou **${subject}** jodi a. Kisa ou vle eksplore? 🎯`
 
     setMessages([{ role: 'assistant', content: greeting }])
-    setSessionStart(new Date())
     setElapsed(0)
+    setSessionStart(null)
     setPtsEarned(0)
     setSessionDone(false)
     setPhase('chat')
@@ -130,6 +124,13 @@ export default function AskPage() {
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
+
+    // Start timer on first message
+    if (!sessionStart) {
+      setSessionStart(new Date())
+      setElapsed(0)
+    }
+
     const userMsg: Message = { role: 'user', content: input }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
@@ -140,14 +141,7 @@ export default function AskPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages:  newMessages,
-          palName,
-          personality,
-          technique,
-          subject,
-          lang,
-        }),
+        body: JSON.stringify({ messages: newMessages, palName, personality, technique, subject, lang }),
       })
       const data = await res.json()
       if (data.message) {
@@ -161,25 +155,26 @@ export default function AskPage() {
 
   const endSession = async () => {
     if (!child || !sessionStart) return
-    const durationMins = Math.max(1, Math.floor(elapsed / 60))
-    const pts          = durationMins * 2
+    const durationMins   = Math.max(1, Math.floor(elapsed / 60))
+    const completedFull  = elapsed >= POMODORO
+    const pts            = completedFull ? 50 : 0
 
-    // Save study session
     await supabase.from('study_sessions').insert({
-      child_id:     child.id,
+      child_id:      child.id,
       subject,
       technique,
       duration_mins: durationMins,
       points_earned: pts,
     })
 
-    // Update points
-    const { data: existing } = await supabase
-      .from('points').select('total').eq('child_id', child.id).single()
-    if (existing) {
-      await supabase.from('points').update({ total: existing.total + pts }).eq('child_id', child.id)
-    } else {
-      await supabase.from('points').insert({ child_id: child.id, total: pts })
+    if (pts > 0) {
+      const { data: existing } = await supabase
+        .from('points').select('total').eq('child_id', child.id).single()
+      if (existing) {
+        await supabase.from('points').update({ total: existing.total + pts }).eq('child_id', child.id)
+      } else {
+        await supabase.from('points').insert({ child_id: child.id, total: pts })
+      }
     }
 
     setPtsEarned(pts)
@@ -190,11 +185,16 @@ export default function AskPage() {
   // ── SETUP SCREEN ────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
-      {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
           <div style={{ animation: 'float 3s ease-in-out infinite' }}>
-            <PalSVG creature={child.pal?.creature || 'land'} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={72} />
+            <PalSVG
+              creature={child.pal?.creature || 'land'}
+              shape={child.pal?.bodyShape || 'round'}
+              palette={palette}
+              feature={child.pal?.feature || 'eyes'}
+              size={72}
+            />
           </div>
           <div>
             <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: isWide ? 32 : 26, fontWeight: 700 }}>
@@ -209,7 +209,7 @@ export default function AskPage() {
 
         {/* Subject */}
         <div>
-          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
             {t.subject}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -230,10 +230,10 @@ export default function AskPage() {
 
         {/* Technique */}
         <div>
-          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
             {t.technique}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: isWide ? '1fr 1fr' : '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {TECHNIQUES.map(tech => (
               <button key={tech.id} onClick={() => setTechnique(tech.id)} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
@@ -244,7 +244,7 @@ export default function AskPage() {
                 fontFamily: 'var(--font-jakarta)',
               }}>
                 <span style={{ fontSize: 24 }}>{tech.icon}</span>
-                <div>
+                <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13 }}>
                     {lang === 'fr' ? tech.labelFr : tech.labelCr}
                   </p>
@@ -252,13 +252,15 @@ export default function AskPage() {
                     {lang === 'fr' ? tech.descFr : tech.descCr}
                   </p>
                 </div>
-                {technique === tech.id && <div style={{ marginLeft: 'auto', color: palette.main, fontSize: 16 }}>✓</div>}
+                {technique === tech.id && (
+                  <span style={{ color: palette.main, fontSize: 16, flexShrink: 0 }}>✓</span>
+                )}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Music preview */}
+        {/* Music */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '16px 18px', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
             🎵
@@ -267,7 +269,15 @@ export default function AskPage() {
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14 }}>{t.musicLabel}</p>
             <p style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>{MUSIC[personality]?.label}</p>
           </div>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
+        </div>
+
+        {/* Points rule */}
+        <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ fontSize: 22 }}>⭐</span>
+          <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
+            Complete un Pomodoro entier (25 min) pour gagner <strong>50 points</strong>. Les sessions plus courtes ne donnent pas de points.
+          </p>
         </div>
 
         <button onClick={startSession} style={{
@@ -290,42 +300,67 @@ export default function AskPage() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)' }}>
 
-      {/* Chat header */}
+      {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => { setPhase('setup'); setMessages([]) }} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => { setPhase('setup'); setMessages([]) }}
+            style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}
+          >
             ←
           </button>
+
           <div style={{ animation: 'float 3s ease-in-out infinite', flexShrink: 0 }}>
-            <PalSVG creature={child.pal?.creature || 'land'} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={40} />
+            <PalSVG
+              creature={child.pal?.creature || 'land'}
+              shape={child.pal?.bodyShape || 'round'}
+              palette={palette}
+              feature={child.pal?.feature || 'eyes'}
+              size={38}
+            />
           </div>
+
           <div style={{ flex: 1 }}>
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-fredoka)' }}>{palName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
-              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{subject} · {TECHNIQUES.find(t => t.id === technique)?.labelFr}</span>
+              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
+                {subject} · {TECHNIQUES.find(tech => tech.id === technique)?.labelFr}
+              </span>
             </div>
           </div>
 
-          {/* Pomodoro timer */}
-          {isPomodoro && (
-            <div style={{ background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)', border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`, borderRadius: 12, padding: '6px 14px', textAlign: 'center' }}>
-              <p style={{ color: pomodoroLeft === 0 ? '#22C55E' : '#FBBF24', fontWeight: 800, fontSize: 16, fontFamily: 'var(--font-fredoka)' }}>
-                {pomodoroLeft === 0 ? '🎉' : `${pomodoroMins}:${pomodoroSecs}`}
+          {/* Pomodoro timer — only shows after first message */}
+          {sessionStart && (
+            <div style={{
+              background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)',
+              border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`,
+              borderRadius: 12, padding: '6px 12px', textAlign: 'center', flexShrink: 0,
+            }}>
+              <p style={{ color: pomodoroLeft === 0 ? '#22C55E' : '#FBBF24', fontWeight: 800, fontSize: 15, fontFamily: 'var(--font-fredoka)', lineHeight: 1 }}>
+                {pomodoroLeft === 0 ? '🎉 +50' : `${pomodoroMins}:${pomodoroSecs}`}
               </p>
-              <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700 }}>
-                {pomodoroLeft === 0 ? 'PAUSE!' : t.pomodoroLabel.toUpperCase()}
+              <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700, marginTop: 2 }}>
+                {pomodoroLeft === 0 ? 'TERMINÉ!' : t.pomodoroLabel.toUpperCase()}
               </p>
             </div>
           )}
 
           {/* Music toggle */}
-          <button onClick={() => setShowMusic(m => !m)} style={{ background: showMusic ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.08)', border: `1px solid ${showMusic ? '#22C55E' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '7px 10px', cursor: 'pointer', fontSize: 16, color: showMusic ? '#22C55E' : 'rgba(255,255,255,.5)' }}>
+          <button
+            onClick={() => setShowMusic(m => !m)}
+            style={{
+              background: showMusic ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.08)',
+              border: `1px solid ${showMusic ? '#22C55E' : 'rgba(255,255,255,.1)'}`,
+              borderRadius: 10, padding: '7px 10px', cursor: 'pointer',
+              fontSize: 16, color: showMusic ? '#22C55E' : 'rgba(255,255,255,.5)',
+              flexShrink: 0,
+            }}
+          >
             🎵
           </button>
         </div>
 
-        {/* Hidden music player */}
         {showMusic && (
           <div style={{ marginTop: 10 }}>
             <iframe
@@ -340,11 +375,17 @@ export default function AskPage() {
 
       {/* Session done banner */}
       {sessionDone && (
-        <div style={{ background: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <p style={{ fontWeight: 700, color: '#065F46', fontSize: 14 }}>
-            {t.sessionSaved}{ptsEarned} {t.points}
+        <div style={{ background: ptsEarned > 0 ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : '#FEF3C7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <p style={{ fontWeight: 700, color: ptsEarned > 0 ? '#065F46' : '#92400E', fontSize: 14 }}>
+            {ptsEarned > 0
+              ? `${t.sessionSaved}${ptsEarned} ${t.points}`
+              : '⏱️ Complète 25 min pour gagner des points la prochaine fois!'
+            }
           </p>
-          <button onClick={() => { setPhase('setup'); setMessages([]); setSessionDone(false) }} style={{ background: '#065F46', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}>
+          <button
+            onClick={() => { setPhase('setup'); setMessages([]); setSessionDone(false) }}
+            style={{ background: ptsEarned > 0 ? '#065F46' : '#92400E', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}
+          >
             Nouvelle session
           </button>
         </div>
@@ -356,7 +397,13 @@ export default function AskPage() {
           <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
             {msg.role === 'assistant' && (
               <div style={{ flexShrink: 0, marginBottom: 2 }}>
-                <PalSVG creature={child.pal?.creature || 'land'} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={28} />
+                <PalSVG
+                  creature={child.pal?.creature || 'land'}
+                  shape={child.pal?.bodyShape || 'round'}
+                  palette={palette}
+                  feature={child.pal?.feature || 'eyes'}
+                  size={28}
+                />
               </div>
             )}
             <div style={{
@@ -377,7 +424,13 @@ export default function AskPage() {
         {loading && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
             <div style={{ flexShrink: 0 }}>
-              <PalSVG creature={child.pal?.creature || 'land'} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={28} />
+              <PalSVG
+                creature={child.pal?.creature || 'land'}
+                shape={child.pal?.bodyShape || 'round'}
+                palette={palette}
+                feature={child.pal?.feature || 'eyes'}
+                size={28}
+              />
             </div>
             <div style={{ background: 'rgba(59,82,212,.3)', border: '1px solid rgba(59,82,212,.3)', borderRadius: '18px 18px 18px 4px', padding: '12px 16px', display: 'flex', gap: 5 }}>
               {[0,1,2].map(n => (
@@ -399,43 +452,73 @@ export default function AskPage() {
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder={t.typeMessage}
               style={{
-                flex: 1, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.1)',
-                borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14,
+                flex: 1, background: 'rgba(255,255,255,.08)',
+                border: '1px solid rgba(255,255,255,.1)',
+                borderRadius: 16, padding: '12px 16px',
+                color: '#fff', fontSize: 14,
                 fontFamily: 'var(--font-jakarta)', outline: 'none',
               }}
             />
-            <button onClick={sendMessage} disabled={loading || !input.trim()} style={{
-              width: 46, height: 46, borderRadius: 14, border: 'none',
-              background: input.trim() ? '#FBBF24' : 'rgba(255,255,255,.08)',
-              color: input.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)',
-              fontSize: 18, cursor: input.trim() ? 'pointer' : 'default',
-              flexShrink: 0, transition: 'all .2s',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+            <button
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              style={{
+                width: 46, height: 46, borderRadius: 14, border: 'none',
+                background: input.trim() ? '#FBBF24' : 'rgba(255,255,255,.08)',
+                color: input.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)',
+                fontSize: 18, cursor: input.trim() ? 'pointer' : 'default',
+                flexShrink: 0, transition: 'all .2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
               ↑
             </button>
           </div>
         )}
-        <button onClick={endSession} disabled={sessionDone} style={{
-          width: '100%', padding: '11px',
-          background: sessionDone ? 'rgba(255,255,255,.05)' : 'rgba(239,68,68,.15)',
-          color: sessionDone ? 'rgba(255,255,255,.2)' : '#FCA5A5',
-          border: `1px solid ${sessionDone ? 'rgba(255,255,255,.05)' : 'rgba(239,68,68,.2)'}`,
-          borderRadius: 12, fontWeight: 700, fontSize: 13,
-          cursor: sessionDone ? 'default' : 'pointer',
-          fontFamily: 'var(--font-jakarta)',
-        }}>
-          {t.endSession} · {Math.floor(elapsed / 60)}min
+
+        <button
+          onClick={endSession}
+          disabled={sessionDone || !sessionStart}
+          style={{
+            width: '100%', padding: '11px',
+            background: sessionDone || !sessionStart
+              ? 'rgba(255,255,255,.05)'
+              : elapsed >= POMODORO
+                ? 'rgba(34,197,94,.15)'
+                : 'rgba(239,68,68,.15)',
+            color: sessionDone || !sessionStart
+              ? 'rgba(255,255,255,.2)'
+              : elapsed >= POMODORO
+                ? '#86EFAC'
+                : '#FCA5A5',
+            border: `1px solid ${
+              sessionDone || !sessionStart
+                ? 'rgba(255,255,255,.05)'
+                : elapsed >= POMODORO
+                  ? 'rgba(34,197,94,.2)'
+                  : 'rgba(239,68,68,.2)'
+            }`,
+            borderRadius: 12, fontWeight: 700, fontSize: 13,
+            cursor: sessionDone || !sessionStart ? 'default' : 'pointer',
+            fontFamily: 'var(--font-jakarta)',
+          }}
+        >
+          {!sessionStart
+            ? 'Envoie un message pour démarrer le timer'
+            : sessionDone
+              ? 'Session terminée'
+              : elapsed >= POMODORO
+                ? `Terminer · +50 pts ⭐ · ${Math.floor(elapsed / 60)}min`
+                : `${t.endSession} · ${Math.floor(elapsed / 60)}min · (25min = points)`
+          }
         </button>
       </div>
 
       <style>{`
-        @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes typing  { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
+        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
       `}</style>
     </div>
   )
 }
-
-
 

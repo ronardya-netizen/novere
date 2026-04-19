@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import MentorsAdmin from './components/MentorsAdmin'
 import ArticlesAdmin from './components/ArticlesAdmin'
 import GiftsAdmin from './components/GiftsAdmin'
@@ -16,10 +15,10 @@ const tabs = [
 ]
 
 export default function AdminPage() {
-  const [authed, setAuthed]   = useState(false)
-  const [pw, setPw]           = useState('')
-  const [error, setError]     = useState('')
-  const [tab, setTab]         = useState('mentors')
+  const [authed, setAuthed] = useState(false)
+  const [pw, setPw]         = useState('')
+  const [error, setError]   = useState('')
+  const [tab, setTab]       = useState('mentors')
 
   const login = () => {
     if (pw === ADMIN_PASSWORD) setAuthed(true)
@@ -57,7 +56,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#F4F7FF', fontFamily:'var(--font-jakarta)' }}>
-      {/* Header */}
       <div style={{ background:'#0B1F4B', padding:'16px 32px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <span style={{ fontSize:24 }}>😊</span>
@@ -71,7 +69,6 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* Tabs */}
       <div style={{ background:'#fff', borderBottom:'1px solid #E2E8F0', padding:'0 32px', display:'flex', gap:4 }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -87,7 +84,6 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Content */}
       <div style={{ padding:32, maxWidth:900, margin:'0 auto' }}>
         {tab === 'mentors'  && <MentorsAdmin />}
         {tab === 'articles' && <ArticlesAdmin />}

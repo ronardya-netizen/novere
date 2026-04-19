@@ -4,15 +4,19 @@ import MentorsAdmin from './components/MentorsAdmin'
 import ArticlesAdmin from './components/ArticlesAdmin'
 import GiftsAdmin from './components/GiftsAdmin'
 import SessionsAdmin from './components/SessionsAdmin'
+import RedemptionsAdmin from './components/RedemptionsAdmin'
+
 
 const ADMIN_PASSWORD = 'novere2025'
 
 const tabs = [
-  { id: 'mentors',  label: 'Mentors',  icon: '🌟' },
-  { id: 'articles', label: 'Articles', icon: '🦸' },
-  { id: 'gifts',    label: 'Cadeaux',  icon: '🎁' },
-  { id: 'sessions', label: 'Sessions', icon: '📅' },
+  { id: 'mentors',    label: 'Mentors',    icon: '🌟' },
+  { id: 'articles',   label: 'Articles',   icon: '🦸' },
+  { id: 'gifts',      label: 'Cadeaux',    icon: '🎁' },
+  { id: 'sessions',   label: 'Sessions',   icon: '📅' },
+  { id: 'redemptions',label: 'Demandes',   icon: '🔔' },
 ]
+
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
@@ -206,6 +210,7 @@ export default function AdminPage() {
         {tab === 'articles' && <ArticlesAdmin />}
         {tab === 'gifts'    && <GiftsAdmin />}
         {tab === 'sessions' && <SessionsAdmin />}
+        {tab === 'redemptions' && <RedemptionsAdmin />}
       </div>
     </div>
   )

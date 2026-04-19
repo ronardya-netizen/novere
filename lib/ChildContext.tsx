@@ -22,17 +22,20 @@ type Child = {
 type ChildContextType = {
   child: Child | null
   loading: boolean
-  refresh: () => void
+  refresh: () => Promise<void>
 }
 
-const ChildContext = createContext<ChildContextType>({ child: null, loading: true, refresh: () => {} })
+const ChildContext = createContext<ChildContextType>({
+  child: null,
+  loading: true,
+  refresh: async () => {},
+})
 
 export function ChildProvider({ children }: { children: ReactNode }) {
   const [child, setChild]     = useState<Child | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchChild = async () => {
-    setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
@@ -48,11 +51,9 @@ export function ChildProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchChild()
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       fetchChild()
     })
-
     return () => subscription.unsubscribe()
   }, [])
 

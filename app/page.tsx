@@ -1,25 +1,23 @@
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+ 'use client'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
-export default async function Root() {
-  const cookieStore = cookies()
+export default function Root() {
+  const router = useRouter()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/home')
+      else router.push('/auth')
+    })
+  }, [])
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#0B1F4B', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <img src="/novere_logo.png" style={{ width:64, height:64, objectFit:'contain', animation:'pulse 1.5s ease-in-out infinite' }} />
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }`}</style>
+    </div>
   )
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) redirect('/home')
-  else redirect('/auth')
 }
-
 

@@ -16,7 +16,15 @@ const PALETTES: Record<string, any> = {
   night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
 }
 
-const SUBJECTS = ['Mathématiques', 'Français', 'Sciences', 'Histoire', 'Anglais', 'Finances', 'Autre']
+const SUBJECTS = [
+  'Mathématiques',
+  'Français — Lecture',
+  'Français — Écriture',
+  'Science et technologie',
+  'Anglais langue seconde',
+  'Univers social',
+]
+
 
 const TECHNIQUES = [
   { id: 'socratic',  labelFr: 'Socratique',  labelCr: 'Sokrat',  icon: '🔍', descFr: 'Découvre par toi-même',   descCr: 'Dekouvri pou kont ou'   },

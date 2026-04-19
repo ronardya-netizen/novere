@@ -17,21 +17,48 @@ type Article = {
   published: boolean
 }
 
-const SUBJECTS_FR = ['Tout', 'Finances personnelles', 'Sciences', 'Histoire', 'Français', 'Mathématiques', 'Santé mentale', 'Citoyenneté', 'Entrepreneuriat', 'Nutrition', 'Droit & Sécurité']
-const SUBJECTS_CR = ['Tout', 'Finans pèsonèl', 'Syans', 'Istwa', 'Fransè', 'Matematik', 'Sante mantal', 'Sitwayen', 'Antreprenè', 'Nitrisyon', 'Dwa & Sekirite']
+const SUBJECTS_FR = [
+  'Tout',
+  'Finances personnelles',
+  'Santé mentale',
+  'Nutrition',
+  'Citoyenneté',
+  'Entrepreneuriat',
+  'Droit & Sécurité',
+  'Relations sociales',
+  'Environnement',
+  'Technologie & IA',
+  'Identité & Culture',
+]
+
+const SUBJECTS_CR = [
+  'Tout',
+  'Finans pèsonèl',
+  'Sante mantal',
+  'Nitrisyon',
+  'Sitwayen',
+  'Antreprenè',
+  'Dwa & Sekirite',
+  'Relasyon sosyal',
+  'Anviwònman',
+  'Teknoloji & IA',
+  'Idantite & Kilti',
+]
+
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string }> = {
   'Finances personnelles': { bg: '#D1FAE5', text: '#059669' },
-  'Sciences':              { bg: '#DBEAFE', text: '#2563EB' },
-  'Histoire':              { bg: '#EDE9FE', text: '#7C3AED' },
-  'Français':              { bg: '#FEF3C7', text: '#D97706' },
-  'Mathématiques':         { bg: '#FCE7F3', text: '#DB2777' },
-  'Santé mentale':         { bg: '#D1FAE5', text: '#059669' },
+  'Santé mentale':         { bg: '#EDE9FE', text: '#7C3AED' },
+  'Nutrition':             { bg: '#D1FAE5', text: '#16A34A' },
   'Citoyenneté':           { bg: '#DBEAFE', text: '#3B52D4' },
   'Entrepreneuriat':       { bg: '#FEF3C7', text: '#D97706' },
-  'Nutrition':             { bg: '#D1FAE5', text: '#16A34A' },
   'Droit & Sécurité':      { bg: '#FEE2E2', text: '#DC2626' },
+  'Relations sociales':    { bg: '#FCE7F3', text: '#DB2777' },
+  'Environnement':         { bg: '#D1FAE5', text: '#059669' },
+  'Technologie & IA':      { bg: '#DBEAFE', text: '#2563EB' },
+  'Identité & Culture':    { bg: '#FEF3C7', text: '#D97706' },
 }
+
 
 const T = {
   fr: {

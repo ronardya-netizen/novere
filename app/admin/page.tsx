@@ -41,11 +41,17 @@ export default function AdminPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo + name */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <img
-            src="/novere_logo.png"
-            alt="NOVERE"
-            style={{ width: 90, height: 90, marginBottom: 16 }}
-          />
+        <img
+          src="/novere_logo.png"
+          alt="NOVERE"
+          style={{
+            width: 120,
+            height: 120,
+            objectFit: 'contain',
+            marginBottom: 16,
+          }}
+        />
+
           <h1 style={{
             fontFamily: 'var(--font-fredoka)',
             color: '#FFFFFF',
@@ -125,7 +131,16 @@ export default function AdminPage() {
         borderBottom: '2px solid rgba(251,191,36,.2)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/novere_logo.png" alt="NOVERE" style={{ width: 40, height: 40 }} />
+              <img
+        src="/novere_logo.png"
+        alt="NOVERE"
+        style={{
+          width: 44,
+          height: 44,
+          objectFit: 'contain',
+        }}
+      />
+
           <div>
             <p style={{
               fontFamily: 'var(--font-fredoka)',

@@ -40,7 +40,7 @@ export default function AdminPage() {
 
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo + name */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <img
             src="/novere_logo.png"
             alt="NOVERE"

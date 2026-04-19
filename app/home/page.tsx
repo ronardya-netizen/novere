@@ -4,28 +4,68 @@ import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { PalSVG } from '@/lib/pal-svg'
+import { useLang } from './layout'
 
 const PALETTES: Record<string, any> = {
-  ocean:   { main: '#2563EB', accent: '#7DD3FC', glow: 'rgba(37,99,235,.4)'  },
-  fire:    { main: '#EA580C', accent: '#FDE68A', glow: 'rgba(234,88,12,.4)'  },
-  forest:  { main: '#16A34A', accent: '#BBF7D0', glow: 'rgba(22,163,74,.4)'  },
-  cosmic:  { main: '#7C3AED', accent: '#DDD6FE', glow: 'rgba(124,58,237,.4)' },
-  sunrise: { main: '#DB2777', accent: '#FDE68A', glow: 'rgba(219,39,119,.4)' },
-  storm:   { main: '#475569', accent: '#BAE6FD', glow: 'rgba(71,85,105,.4)'  },
-  gold:    { main: '#D97706', accent: '#FEF3C7', glow: 'rgba(217,119,6,.4)'  },
-  night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'   },
+  ocean:   { main: '#3B52D4', accent: '#7DD3FC', glow: 'rgba(59,82,212,.4)'   },
+  fire:    { main: '#EA580C', accent: '#FDE68A', glow: 'rgba(234,88,12,.4)'   },
+  forest:  { main: '#16A34A', accent: '#BBF7D0', glow: 'rgba(22,163,74,.4)'   },
+  cosmic:  { main: '#7C3AED', accent: '#DDD6FE', glow: 'rgba(124,58,237,.4)'  },
+  sunrise: { main: '#DB2777', accent: '#FDE68A', glow: 'rgba(219,39,119,.4)'  },
+  storm:   { main: '#475569', accent: '#BAE6FD', glow: 'rgba(71,85,105,.4)'   },
+  gold:    { main: '#D97706', accent: '#FEF3C7', glow: 'rgba(217,119,6,.4)'   },
+  night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
 }
 
-const GREETINGS: Record<string, string[]> = {
-  brave:   ['Prêt pour l\'aventure aujourd\'hui?', 'Allons relever un défi!', 'Le courage commence ici.'],
-  curious: ['Qu\'allons-nous découvrir aujourd\'hui?', 'Tant de choses à explorer!', 'Une nouvelle question t\'attend.'],
-  funny:   ['Hey, tu sais ce qui est drôle? Apprendre!', 'Prêt à rire... et à apprendre?', 'La bonne humeur, c\'est la moitié du chemin!'],
-  calm:    ['Prends ton temps. On y va ensemble.', 'Chaque pas compte, même le petit.', 'Respire. Explore. Grandis.'],
+const T = {
+  fr: {
+    morning: 'Bonjour', afternoon: 'Bon après-midi', evening: 'Bonsoir',
+    says: 'dit', jours: 'JOURS', points: 'POINTS', sessions: 'SESSIONS',
+    questDuJour: 'Quête du jour', voirTout: 'Voir tout →',
+    reprendre: 'REPRENDRE AVEC', exploration: 'Continue ton exploration! 🎯',
+    complete: 'complété', continuer: 'Continuer →',
+    dernieres: 'Dernières quêtes ✨', avec: 'Avec',
+    questsVide: 'Les quêtes arrivent bientôt!',
+    questsVideSub: 'Ton administrateur prépare du contenu pour toi.',
+    prochainMentor: 'Prochain mentor 🔮',
+    rejoindre: 'Rejoindre',
+    aucuneMentor: 'Aucune session prévue',
+    aucuneMentorSub: 'Ta prochaine session sera bientôt annoncée.',
+    greetings: {
+      brave:   ['Prêt pour l\'aventure?', 'Allons relever un défi!', 'Le courage commence ici.'],
+      curious: ['Qu\'allons-nous découvrir?', 'Tant de choses à explorer!', 'Une nouvelle question t\'attend.'],
+      funny:   ['Prêt à rire... et apprendre?', 'La bonne humeur, c\'est la moitié du chemin!', 'Apprendre, c\'est drôle!'],
+      calm:    ['Prends ton temps.', 'Chaque pas compte.', 'Respire. Explore. Grandis.'],
+    }
+  },
+  cr: {
+    morning: 'Bonjou', afternoon: 'Bon apremidi', evening: 'Bonswa',
+    says: 'di', jours: 'JOU', points: 'PWEN', sessions: 'SESYON',
+    questDuJour: 'Kèt jodi a', voirTout: 'Wè tout →',
+    reprendre: 'KONTINYE AK', exploration: 'Kontinye eksplosyon ou! 🎯',
+    complete: 'konplete', continuer: 'Kontinye →',
+    dernieres: 'Dènye kèt ✨', avec: 'Ak',
+    questsVide: 'Kèt yo ap vini byento!',
+    questsVideSub: 'Administratè ou ap prepare kontni pou ou.',
+    prochainMentor: 'Pwochen mentor 🔮',
+    rejoindre: 'Rantre',
+    aucuneMentor: 'Pa gen sesyon prevwa',
+    aucuneMentorSub: 'Pwochen sesyon ou ap anonse byento.',
+    greetings: {
+      brave:   ['Pare pou avanti?', 'Ann releve yon defi!', 'Kouraj kòmanse isit.'],
+      curious: ['Kisa nou pral dekouvri?', 'Anpil bagay pou eksplore!', 'Yon nouvo kesyon ap tann ou.'],
+      funny:   ['Pare pou ri... ak aprann?', 'Bon imè, se mwatye wout la!', 'Aprann, se amizan!'],
+      calm:    ['Pran tan ou.', 'Chak pa konte.', 'Respire. Eksplore. Grandi.'],
+    }
+  }
 }
 
 export default function HomePage() {
   const { child, loading } = useChild()
-  const router = useRouter()
+  const router   = useRouter()
+  const { lang } = useLang()
+  const t        = T[lang]
+
   const [points, setPoints]         = useState(0)
   const [streak, setStreak]         = useState(0)
   const [sessions, setSessions]     = useState(0)
@@ -33,78 +73,74 @@ export default function HomePage() {
   const [articles, setArticles]     = useState<any[]>([])
   const [greeting, setGreeting]     = useState('')
   const [animIn, setAnimIn]         = useState(false)
+  const [isWide, setIsWide]         = useState(false)
 
-  // Redirect if no child — must be before any early returns
   useEffect(() => {
-    if (!loading && !child) {
-      router.push('/onboarding')
-    }
+    const check = () => setIsWide(window.innerWidth >= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    if (!loading && !child) router.push('/onboarding')
   }, [child, loading, router])
 
-  // Fetch data once child is loaded
   useEffect(() => {
     if (!child) return
     setTimeout(() => setAnimIn(true), 100)
-
-    const greetings = GREETINGS[child.personality] || GREETINGS.curious
-    setGreeting(greetings[Math.floor(Math.random() * greetings.length)])
+    const g = (t.greetings as any)[child.personality] || t.greetings.curious
+    setGreeting(g[Math.floor(Math.random() * g.length)])
 
     supabase.from('points').select('total').eq('child_id', child.id).single()
-      .then(({ data }) => { if (data) setPoints(data.total) })
-
+      .then(({ data }: any) => { if (data) setPoints(data.total) })
     supabase.from('study_sessions').select('id', { count: 'exact' }).eq('child_id', child.id)
-      .then(({ count }) => { if (count) setSessions(count) })
-
+      .then(({ count }: any) => { if (count) setSessions(count) })
     supabase.from('mentor_sessions')
       .select('*, mentors(name, field)')
-      .eq('child_id', child.id)
-      .eq('status', 'upcoming')
-      .order('scheduled_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => { if (data) setNextMentor(data) })
-
+      .eq('child_id', child.id).eq('status', 'upcoming')
+      .order('scheduled_at', { ascending: true }).limit(1).maybeSingle()
+      .then(({ data }: any) => { if (data) setNextMentor(data) })
     supabase.from('news_articles')
       .select('id, title, subject, hero, hero_name')
-      .eq('published', true)
-      .limit(3)
-      .then(({ data }) => { if (data) setArticles(data) })
-
+      .eq('published', true).limit(3)
+      .then(({ data }: any) => { if (data) setArticles(data) })
     setStreak(7)
-  }, [child])
+  }, [child, lang])
 
-  // Loading state
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>
-      <div style={{ fontSize: 48 }}>😊</div>
+      <img src="/novere_logo.png" style={{ width: 64, height: 64, objectFit: 'contain', animation: 'pulse 1.5s ease-in-out infinite' }} />
     </div>
   )
-
-  // No child yet (redirect in progress)
   if (!child) return null
 
-  const palette     = PALETTES[child.pal?.palette || 'ocean']
-  const palName     = child.pal?.name || 'Ton compagnon'
-  const hour        = new Date().getHours()
-  const timeOfDay   = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+  const palette   = PALETTES[child.pal?.palette || 'ocean']
+  const palName   = child.pal?.name || '...'
+  const hour      = new Date().getHours()
+  const timeOfDay = hour < 12 ? t.morning : hour < 18 ? t.afternoon : t.evening
 
-  return (
-    <div style={{ minHeight: '100%', background: '#F4F7FF' }}>
-
-      {/* HERO HEADER */}
-      <div style={{ background: 'linear-gradient(160deg, #0B1F4B 0%, #13306B 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px)', backgroundSize: '24px 24px', pointerEvents: 'none' }} />
+  const LeftCol = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div style={{
+        background: `linear-gradient(160deg, #0B1F4B 0%, #13306B 100%)`,
+        borderRadius: isWide ? 24 : 0,
+        padding: isWide ? '28px 28px 0' : '20px 20px 0',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px)', backgroundSize: '24px 24px', pointerEvents: 'none' }} />
 
         {/* Top row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, position: 'relative', zIndex: 2 }}>
           <div>
             <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 13, marginBottom: 4 }}>{timeOfDay} 👋</p>
-            <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
+            <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: isWide ? 34 : 28, fontWeight: 700, lineHeight: 1.1 }}>
               {child.name}
             </h1>
           </div>
           <div style={{ position: 'relative' }}>
-            <div style={{ width: 46, height: 46, borderRadius: 14, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <div style={{ width: 46, height: 46, borderRadius: 14, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 20 }}>
               🔔
             </div>
             <div style={{ position: 'absolute', top: -3, right: -3, width: 11, height: 11, borderRadius: '50%', background: '#EF4444', border: '2px solid #0B1F4B' }} />
@@ -114,9 +150,9 @@ export default function HomePage() {
         {/* Stats */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, position: 'relative', zIndex: 2 }}>
           {[
-            { icon: '🔥', val: streak.toString(),   label: 'JOURS'    },
-            { icon: '⭐', val: points.toString(),   label: 'POINTS'   },
-            { icon: '📚', val: sessions.toString(), label: 'SESSIONS' },
+            { icon: '🔥', val: streak.toString(),   label: t.jours    },
+            { icon: '⭐', val: points.toString(),   label: t.points   },
+            { icon: '📚', val: sessions.toString(), label: t.sessions },
           ].map(s => (
             <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,.07)', borderRadius: 16, padding: '12px 10px', border: '1px solid rgba(255,255,255,.06)', textAlign: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 3 }}>
@@ -144,91 +180,149 @@ export default function HomePage() {
               shape={child.pal?.bodyShape || 'round'}
               palette={palette}
               feature={child.pal?.feature || 'eyes'}
-              size={72}
+              size={isWide ? 88 : 72}
             />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, marginBottom: 5 }}>{palName} dit:</p>
-            <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 15, lineHeight: 1.6 }}>"{greeting}"</p>
+            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, marginBottom: 5 }}>
+              {palName} {t.says}:
+            </p>
+            <p style={{ color: 'rgba(255,255,255,.85)', fontSize: 15, lineHeight: 1.6 }}>
+              "{greeting}"
+            </p>
           </div>
         </div>
       </div>
 
-      {/* BODY */}
-      <div style={{ background: '#F4F7FF', padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-
-        {/* Daily Quest */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>Quête du jour ⚡</h2>
-            <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout →</button>
+      {/* Daily quest */}
+      <div style={{ padding: isWide ? '0 0' : '0 18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>
+            {t.questDuJour} ⚡
+          </h2>
+          <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
+            {t.voirTout}
+          </button>
+        </div>
+        <div onClick={() => router.push('/home/ask')} style={{
+          background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`,
+          borderRadius: 20, padding: '18px 20px', cursor: 'pointer',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{ position: 'absolute', right: -20, bottom: -20, fontSize: 90, opacity: .07 }}>⚡</div>
+          <p style={{ color: 'rgba(255,255,255,.45)', fontSize: 11, fontWeight: 700, letterSpacing: '.07em', marginBottom: 8 }}>
+            {t.reprendre} {palName.toUpperCase()}
+          </p>
+          <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 18, marginBottom: 14 }}>
+            {t.exploration}
+          </h3>
+          <div style={{ height: 6, background: 'rgba(255,255,255,.12)', borderRadius: 99, marginBottom: 10 }}>
+            <div style={{ height: '100%', width: '65%', background: '#FBBF24', borderRadius: 99 }} />
           </div>
-          <div onClick={() => router.push('/home/ask')} style={{ background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`, borderRadius: 20, padding: '18px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -20, bottom: -20, fontSize: 90, opacity: .07 }}>⚡</div>
-            <p style={{ color: 'rgba(255,255,255,.45)', fontSize: 11, fontWeight: 700, letterSpacing: '.07em', marginBottom: 8 }}>REPRENDRE AVEC {palName.toUpperCase()}</p>
-            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 18, marginBottom: 14 }}>Continue ton exploration! 🎯</h3>
-            <div style={{ height: 6, background: 'rgba(255,255,255,.12)', borderRadius: 99, marginBottom: 10 }}>
-              <div style={{ height: '100%', width: '65%', background: '#FBBF24', borderRadius: 99 }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>65% complété</span>
-              <div style={{ background: '#FBBF24', color: '#0B1F4B', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 800 }}>Continuer →</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>65% {t.complete}</span>
+            <div style={{ background: '#FBBF24', color: '#0B1F4B', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 800 }}>
+              {t.continuer}
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
 
-        {/* Articles */}
+  const RightCol = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: isWide ? '0' : '0 18px' }}>
+
+      {/* Articles */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>
+            {t.dernieres}
+          </h2>
+          <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
+            {t.voirTout}
+          </button>
+        </div>
         {articles.length > 0 ? (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600 }}>Dernières quêtes ✨</h2>
-              <button onClick={() => router.push('/home/quests')} style={{ color: palette.main, fontSize: 13, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout →</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {articles.map(a => (
-                <div key={a.id} onClick={() => router.push('/home/quests')} style={{ background: '#fff', borderRadius: 18, padding: '14px 16px', border: '1.5px solid #E2E8F0', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{a.hero || '🦸'}</div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ background: '#DBEAFE', color: '#2563EB', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{a.subject}</span>
-                    <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 5 }}>{a.title}</p>
-                    <p style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>Avec {a.hero_name}</p>
-                  </div>
-                  <span style={{ color: '#CBD5E1', fontSize: 20 }}>›</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {articles.map((a: any) => (
+              <div key={a.id} onClick={() => router.push('/home/quests')} style={{
+                background: '#fff', borderRadius: 18, padding: '14px 16px',
+                border: '1.5px solid #E2E8F0', display: 'flex', gap: 12,
+                alignItems: 'center', cursor: 'pointer',
+                transition: 'transform .15s, box-shadow .15s',
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,.08)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+              >
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
+                  {a.hero || '🦸'}
                 </div>
-              ))}
+                <div style={{ flex: 1 }}>
+                  <span style={{ background: '#DBEAFE', color: '#3B52D4', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{a.subject}</span>
+                  <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 5 }}>{a.title}</p>
+                  <p style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{t.avec} {a.hero_name}</p>
+                </div>
+                <span style={{ color: '#CBD5E1', fontSize: 20 }}>›</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ background: '#fff', borderRadius: 20, padding: 28, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
+            <p style={{ fontSize: 36, marginBottom: 10 }}>🦸</p>
+            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>{t.questsVide}</p>
+            <p style={{ color: '#94A3B8', fontSize: 13 }}>{t.questsVideSub}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Next mentor */}
+      <div>
+        <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>
+          {t.prochainMentor}
+        </h2>
+        {nextMentor ? (
+          <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F0F9FF)', borderRadius: 20, padding: '18px', border: '1.5px solid #BFDBFE', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>🌟</div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{nextMentor.mentors?.name}</p>
+              <p style={{ color: '#3B52D4', fontSize: 13, fontWeight: 600 }}>{nextMentor.mentors?.field}</p>
+              <p style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>
+                {new Date(nextMentor.scheduled_at).toLocaleString(lang === 'fr' ? 'fr-CA' : 'fr-CA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            <div style={{ background: '#3B52D4', color: '#fff', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+              {t.rejoindre}
             </div>
           </div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
-            <p style={{ fontSize: 32, marginBottom: 8 }}>🦸</p>
-            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>Les quêtes arrivent bientôt!</p>
-            <p style={{ color: '#94A3B8', fontSize: 13 }}>Ton administrateur prépare du contenu pour toi.</p>
+          <div style={{ background: '#fff', borderRadius: 20, padding: 28, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
+            <p style={{ fontSize: 36, marginBottom: 10 }}>🔮</p>
+            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>{t.aucuneMentor}</p>
+            <p style={{ color: '#94A3B8', fontSize: 13 }}>{t.aucuneMentorSub}</p>
           </div>
         )}
-
-        {/* Mentor */}
-        <div>
-          <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Prochain mentor 🔮</h2>
-          {nextMentor ? (
-            <div style={{ background: '#EFF6FF', borderRadius: 20, padding: '16px', border: '1.5px solid #BFDBFE', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>🌟</div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{nextMentor.mentors?.name}</p>
-                <p style={{ color: '#2563EB', fontSize: 13, fontWeight: 600 }}>{nextMentor.mentors?.field}</p>
-                <p style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>{new Date(nextMentor.scheduled_at).toLocaleString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
-              <div style={{ background: '#2563EB', color: '#fff', borderRadius: 12, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Rejoindre</div>
-            </div>
-          ) : (
-            <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
-              <p style={{ fontSize: 32, marginBottom: 8 }}>🔮</p>
-              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>Aucune session prévue</p>
-              <p style={{ color: '#94A3B8', fontSize: 13 }}>Ton prochain mentor sera bientôt assigné.</p>
-            </div>
-          )}
-        </div>
-
       </div>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100%', background: '#F4F7FF' }}>
+      {isWide ? (
+        /* DESKTOP / TABLET — two column */
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, padding: 28, maxWidth: 1200, margin: '0 auto' }}>
+          <LeftCol />
+          <RightCol />
+        </div>
+      ) : (
+        /* MOBILE — single column */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 22, paddingBottom: 24 }}>
+          <LeftCol />
+          <div style={{ padding: '0 18px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+            <RightCol />
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }

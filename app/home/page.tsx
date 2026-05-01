@@ -86,27 +86,110 @@ export default function HomePage() {
     if (!loading && !child) router.push('/onboarding')
   }, [child, loading, router])
 
-  useEffect(() => {
-    if (!child) return
-    setTimeout(() => setAnimIn(true), 100)
-    const g = (t.greetings as any)[child.personality] || t.greetings.curious
-    setGreeting(g[Math.floor(Math.random() * g.length)])
+useEffect(() => {
+  if (!child) return
+  setTimeout(() => setAnimIn(true), 100)
+  const g = (t.greetings as any)[child.personality] || t.greetings.curious
+  setGreeting(g[Math.floor(Math.random() * g.length)])
 
-    supabase.from('points').select('total').eq('child_id', child.id).single()
-      .then(({ data }: any) => { if (data) setPoints(data.total) })
-    supabase.from('study_sessions').select('id', { count: 'exact' }).eq('child_id', child.id)
-      .then(({ count }: any) => { if (count) setSessions(count) })
-    supabase.from('mentor_sessions')
-      .select('*, mentors(name, field)')
-      .eq('child_id', child.id).eq('status', 'upcoming')
-      .order('scheduled_at', { ascending: true }).limit(1).maybeSingle()
-      .then(({ data }: any) => { if (data) setNextMentor(data) })
-    supabase.from('news_articles')
-      .select('id, title, subject, hero, hero_name')
-      .eq('published', true).limit(3)
-      .then(({ data }: any) => { if (data) setArticles(data) })
-    setStreak(7)
-  }, [child, lang])
+  // Points
+  supabase.from('points').select('total').eq('child_id', child.id).single()
+    .then(({ data }: any) => { if (data) setPoints(data.total) })
+
+  // Sessions count
+  supabase.from('study_sessions').select('id', { count: 'exact' }).eq('child_id', child.id)
+    .then(({ count }: any) => { if (count) setSessions(count) })
+
+  // Next mentor
+  supabase.from('mentor_sessions')
+    .select('*, mentors(name, field)')
+    .eq('child_id', child.id).eq('status', 'upcoming')
+    .order('scheduled_at', { ascending: true }).limit(1).maybeSingle()
+    .then(({ data }: any) => { if (data) setNextMentor(data) })
+
+  // Articles
+  supabase.from('news_articles')
+    .select('id, title, subject, hero, hero_name')
+    .eq('published', true).limit(3)
+    .then(({ data }: any) => { if (data) setArticles(data) })
+
+  // Streak — based on parent schedule + completed Pomodoros
+  const computeStreak = async () => {
+    // 1. Get active schedule
+    const { data: schedule } = await supabase
+      .from('focus_schedules')
+      .select('days, start_time, end_time')
+      .eq('child_id', child.id)
+      .eq('active', true)
+      .maybeSingle()
+
+    // 2. Get all completed Pomodoro sessions
+    const { data: pomodoros } = await supabase
+      .from('study_sessions')
+      .select('created_at')
+      .eq('child_id', child.id)
+      .eq('technique', 'pomodoro')
+      .gt('points_earned', 0)
+      .order('created_at', { ascending: false })
+
+    if (!pomodoros || pomodoros.length === 0) { setStreak(0); return }
+
+    // No schedule set — count distinct days with a completed Pomodoro
+    if (!schedule || !schedule.days || schedule.days.length === 0) {
+      const uniqueDays = new Set(
+        pomodoros.map((s: any) => new Date(s.created_at).toDateString())
+      ).size
+      setStreak(uniqueDays)
+      return
+    }
+
+    // 3. Build a set of "completed windows" — date strings where a Pomodoro
+    //    happened inside the scheduled time window
+    const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+    const scheduledDays: string[] = schedule.days.map((d: string) => d.toLowerCase())
+
+    const [startH, startM] = (schedule.start_time as string).split(':').map(Number)
+    const [endH,   endM  ] = (schedule.end_time   as string).split(':').map(Number)
+
+    const completedDates = new Set<string>()
+    for (const s of pomodoros) {
+      const d = new Date(s.created_at)
+      const h = d.getHours()
+      const m = d.getMinutes()
+      const inWindow = (h > startH || (h === startH && m >= startM)) &&
+                       (h < endH   || (h === endH   && m <= endM))
+      if (inWindow) {
+        completedDates.add(d.toDateString())
+      }
+    }
+
+    // 4. Walk backwards from today through scheduled days, count consecutive hits
+    let count   = 0
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const cursor = new Date(today)
+
+    // Check up to 90 days back
+    for (let i = 0; i < 90; i++) {
+      const dayName = DAY_NAMES[cursor.getDay()]
+      if (scheduledDays.includes(dayName)) {
+        const hit = completedDates.has(cursor.toDateString())
+        // Allow today to be incomplete without breaking streak
+        if (!hit && cursor.toDateString() !== today.toDateString()) {
+          break
+        }
+        if (hit) count++
+      }
+      cursor.setDate(cursor.getDate() - 1)
+    }
+
+    setStreak(count)
+  }
+
+  computeStreak()
+}, [child, lang])
+
+
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>

@@ -6,8 +6,7 @@ import { supabase } from '@/lib/supabase'
 const COPY = {
   fr: {
     navLinks: ['Ce qu\'on offre', 'Comment ça marche', 'Notre mission', 'Tarifs'],
-    navCta: 'Essayer gratuitement →',
-    tagline: 'Le plaisir d\'apprendre en s\'amusant.',
+    navCta: 'Essayer →',
     badge: 'Montréal · Haïti · Grandir ensemble',
     heroTitle: 'Le plaisir d\'apprendre\nen s\'amusant.',
     heroSub: 'NOVERE accompagne les enfants avec une expérience de tutorat pensée pour la confiance, la curiosité et la progression. Grâce à un compagnon d\'apprentissage unique et à des mentors inspirants, l\'enfant avance à son rythme, dans un cadre rassurant et engageant.',
@@ -60,28 +59,20 @@ const COPY = {
     copyright: '© 2025 NOVERE Inc. — Montréal, Québec.',
     phoneBubble1: 'Si tu coupes une pizza en 4 parts égales et tu en prends 2, c\'est quelle fraction? 🍕',
     phoneBubble2: 'c\'est 2/4? 😅',
-    phoneBubble3: 'Exactement! Et tu peux simplifier ça? Réfléchis... 🤔',
+    phoneBubble3: 'Exactement! Et tu peux simplifier ça? 🤔',
     phonePal: 'Naruto · Ton compagnon',
     phoneLang: 'Français · Kreyòl',
     phonePoints: '620 / 1000 pts',
     phonePointsSub: 'Prochain cadeau NOVERE',
     floatLeft: { label: '50 points gagnés', sub: 'Session Pomodoro · Maths' },
     floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Médecine · McGill' },
-    testiEyebrow: 'Témoignages',
-    testiTitle: 'Des familles montréalaises nous font confiance',
-    testis: [
-      { quote: '"Mon fils de 9 ans attend son compagnon chaque soir. Il me demande des devoirs supplémentaires! Je n\'aurais jamais cru ça possible."', name: 'Marlène J.', role: 'Maman · Montréal-Nord', ava: '👩🏾', bg: '#FEF3C7' },
-      { quote: '"Le fait que ça soit disponible en créole haïtien, c\'est énorme pour notre famille. Ma fille alterne les deux langues sans problème."', name: 'Jean-Pierre M.', role: 'Papa · Saint-Michel', ava: '👨🏿', bg: '#DBEAFE' },
-      { quote: '"Les flashcards automatiques sont brillantes. Ma fille révise pendant 5 minutes avant l\'école et ses notes en maths ont déjà augmenté."', name: 'Sophia L.', role: 'Maman · Côte-des-Neiges', ava: '👩', bg: '#D1FAE5' },
-    ],
   },
   kr: {
     navLinks: ['Sa nou ofri', 'Kijan sa mache', 'Misyon nou', 'Pri'],
-    navCta: 'Eseye gratis →',
-    tagline: 'Aprann pandan wap amize w.',
+    navCta: 'Eseye →',
     badge: 'Montréal · Ayiti · Grandi ansanm',
     heroTitle: 'Aprann pandan\nwap amize w.',
-    heroSub: 'NOVERE akonpaye timoun yo ak yon eksperyans tutorat ki fèt pou konfyans, kiryozite ak pwogrè. Avèk yon konpayon aprantisaj inik ak konseye ki enspire, timoun nan avanse nan rit pa li, nan yon anviwònman ki ankouraje li epi fè li santi l an sekirite.',
+    heroSub: 'NOVERE akonpaye timoun yo ak yon eksperyans tutorat ki fèt pou konfyans, kiryozite ak pwogrè. Avèk yon konpayon aprantisaj inik ak konseye ki enspire, timoun nan avanse nan rit pa li, nan yon anviwònman ki ankouraje li.',
     ctaPrimary: 'Eseye gratis →',
     ctaSecondary: 'Gade kijan sa mache',
     trustLabel: 'Pilot an kou · Montréal, 2025',
@@ -131,25 +122,18 @@ const COPY = {
     copyright: '© 2025 NOVERE Inc. — Montréal, Québec.',
     phoneBubble1: 'Si ou koupe yon pizza an 4 pati egal epi ou pran 2, ki fraksyon sa a? 🍕',
     phoneBubble2: 'se 2/4? 😅',
-    phoneBubble3: 'Egzakteman! Epi ou ka senplifye sa? Reflechi... 🤔',
+    phoneBubble3: 'Egzakteman! Epi ou ka senplifye sa? 🤔',
     phonePal: 'Naruto · Konpayon ou',
     phoneLang: 'Franse · Kreyòl',
     phonePoints: '620 / 1000 pwen',
     phonePointsSub: 'Pwochen kado NOVERE',
     floatLeft: { label: '50 pwen ranmase', sub: 'Sesyon Pomodoro · Math' },
     floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Medsin · McGill' },
-    testiEyebrow: 'Temwayaj',
-    testiTitle: 'Fanmi montreyalè fè nou konfyans',
-    testis: [
-      { quote: '"Pitit gason mwen ki gen 9 an ap tann konpayon li chak swa. Li mande m devwa anplis! Mwen pa ta janm kwè sa posib."', name: 'Marlène J.', role: 'Manman · Montréal-Nord', ava: '👩🏾', bg: '#FEF3C7' },
-      { quote: '"Lefèt ke li disponib an kreyòl ayisyen, sa se yon gwo bagay pou fanmi nou. Fi mwen alène de lang yo san pwoblèm."', name: 'Jean-Pierre M.', role: 'Papa · Saint-Michel', ava: '👨🏿', bg: '#DBEAFE' },
-      { quote: '"Flashcard otomatik yo bril. Fi mwen revize pandan 5 minit anvan lekòl epi nòt matematik li yo deja monte."', name: 'Sophia L.', role: 'Manman · Côte-des-Neiges', ava: '👩', bg: '#D1FAE5' },
-    ],
   },
 }
 
 export default function Root() {
-  const router   = useRouter()
+  const router = useRouter()
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
@@ -170,7 +154,7 @@ export default function Root() {
 }
 
 function LandingPage() {
-  const router   = useRouter()
+  const router = useRouter()
   const [lang, setLang] = useState<'fr'|'kr'>('fr')
   const c = COPY[lang]
 
@@ -182,17 +166,46 @@ function LandingPage() {
         html{scroll-behavior:smooth;font-family:'Plus Jakarta Sans',sans-serif}
         body{background:var(--off);color:var(--text);overflow-x:hidden}
 
-        nav{position:sticky;top:0;z-index:100;background:rgba(11,31,75,0.97);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:68px;border-bottom:2px solid rgba(251,191,36,0.25)}
-        .logo{font-family:'Fredoka',sans-serif;font-size:1.9rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px;text-decoration:none}
-        .logo img{width:38px;height:38px;object-fit:contain}
-        .nav-links{display:flex;gap:32px;list-style:none}
-        .nav-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color .2s}
+        /* ── NAV ── */
+        nav{
+          position:sticky;top:0;z-index:100;
+          background:rgba(11,31,75,0.97);
+          backdrop-filter:blur(12px);
+          display:flex;align-items:center;justify-content:space-between;
+          padding:0 4%;height:64px;
+          border-bottom:2px solid rgba(251,191,36,0.25);
+          gap:8px;
+        }
+        .logo{
+          font-family:'Fredoka',sans-serif;
+          font-size:1.6rem;font-weight:700;color:#fff;
+          display:flex;align-items:center;gap:8px;
+          text-decoration:none;flex-shrink:0;
+        }
+        .logo img{width:32px;height:32px;object-fit:contain}
+        .nav-links{display:flex;gap:24px;list-style:none;flex:1;justify-content:center}
+        .nav-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.85rem;font-weight:500;transition:color .2s;white-space:nowrap}
         .nav-links a:hover{color:var(--yellow)}
-        .lang-pill{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:5px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+        .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+        .lang-pill{
+          background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);
+          border:1px solid rgba(255,255,255,0.2);border-radius:99px;
+          padding:4px 10px;font-size:0.72rem;font-weight:700;
+          cursor:pointer;transition:all .2s;
+          font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;
+        }
         .lang-pill:hover,.lang-pill.active{background:rgba(251,191,36,0.2);color:var(--yellow);border-color:rgba(251,191,36,0.5)}
-        .btn-nav{background:var(--yellow);color:var(--navy);border:none;border-radius:99px;padding:8px 22px;font-weight:700;font-size:0.88rem;cursor:pointer;transition:transform .15s,box-shadow .15s;font-family:'Plus Jakarta Sans',sans-serif}
+        .btn-nav{
+          background:var(--yellow);color:var(--navy);
+          border:none;border-radius:99px;
+          padding:7px 14px;font-weight:700;font-size:0.82rem;
+          cursor:pointer;transition:transform .15s,box-shadow .15s;
+          font-family:'Plus Jakarta Sans',sans-serif;
+          white-space:nowrap;flex-shrink:0;
+        }
         .btn-nav:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,191,36,0.45)}
 
+        /* ── HERO ── */
         .hero{background:linear-gradient(135deg,var(--navy) 0%,#0D2860 60%,#1a1060 100%);min-height:92vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:80px 5% 60px;position:relative;overflow:hidden}
         .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 70% 50%,rgba(59,82,212,0.25) 0%,transparent 70%);pointer-events:none}
         .hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,0.06) 1px,transparent 1px);background-size:32px 32px}
@@ -200,8 +213,7 @@ function LandingPage() {
         .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);border-radius:99px;padding:6px 16px;color:var(--yellow);font-size:0.8rem;font-weight:600;margin-bottom:28px;animation:fadeUp .6s ease both}
         .hero-badge::before{content:'✦';font-size:0.7rem}
         .hero h1{font-family:'Fredoka',sans-serif;font-size:clamp(2.8rem,5vw,4.2rem);font-weight:700;line-height:1.1;color:#fff;margin-bottom:24px;animation:fadeUp .6s .1s ease both;white-space:pre-line}
-        .hero h1 em{font-style:normal;color:var(--yellow)}
-        .hero p{font-size:1.1rem;line-height:1.75;color:rgba(255,255,255,0.7);max-width:480px;margin-bottom:36px;animation:fadeUp .6s .2s ease both}
+        .hero p{font-size:1.05rem;line-height:1.75;color:rgba(255,255,255,0.7);max-width:480px;margin-bottom:36px;animation:fadeUp .6s .2s ease both}
         .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp .6s .3s ease both}
         .btn-primary{background:var(--yellow);color:var(--navy);border:none;border-radius:14px;padding:14px 32px;font-weight:700;font-size:1rem;cursor:pointer;transition:transform .15s,box-shadow .2s;font-family:'Plus Jakarta Sans',sans-serif}
         .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(251,191,36,0.5)}
@@ -215,37 +227,66 @@ function LandingPage() {
         .trust-text{color:rgba(255,255,255,0.6);font-size:0.85rem}
         .trust-text strong{color:#fff}
 
+        /* ── PHONE MOCKUP ── */
         .hero-visual{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;animation:fadeUp .7s .2s ease both}
-        .phone-frame{width:280px;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:32px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)}
-        .phone-status{background:rgba(0,0,0,0.3);padding:12px 20px 8px;display:flex;justify-content:space-between;align-items:center}
-        .phone-status span{color:rgba(255,255,255,0.5);font-size:0.7rem;font-weight:600}
-        .phone-notch{width:80px;height:22px;background:rgba(0,0,0,0.5);border-radius:0 0 16px 16px;margin:0 auto}
-        .chat-screen{padding:16px;display:flex;flex-direction:column;gap:12px}
-        .chat-header{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.07);border-radius:14px;padding:10px 14px}
-        .avatar-img{width:36px;height:36px;border-radius:50%;object-fit:contain;flex-shrink:0}
-        .chat-header-text{flex:1}
-        .chat-header-text p{color:#fff;font-size:0.8rem;font-weight:600}
-        .chat-header-text span{color:rgba(255,255,255,0.4);font-size:0.65rem}
-        .online-dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
-        .bubble{max-width:88%;padding:10px 14px;border-radius:16px;font-size:0.75rem;line-height:1.5}
-        .bubble-ai{background:rgba(59,82,212,0.35);border:1px solid rgba(59,82,212,0.3);color:rgba(255,255,255,0.9);border-bottom-left-radius:4px;align-self:flex-start}
-        .bubble-user{background:var(--yellow);color:var(--navy);font-weight:600;border-bottom-right-radius:4px;align-self:flex-end;margin-left:auto}
-        .bubble-typing{display:flex;gap:4px;align-items:center;padding:12px 16px}
-        .bubble-typing span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);animation:typing 1.2s infinite}
+        .phone-frame{width:270px;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:32px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)}
+        .phone-status{background:rgba(0,0,0,0.3);padding:10px 18px 6px;display:flex;justify-content:space-between;align-items:center}
+        .phone-status span{color:rgba(255,255,255,0.5);font-size:0.68rem;font-weight:600}
+        .phone-notch{width:70px;height:18px;background:rgba(0,0,0,0.5);border-radius:0 0 14px 14px;margin:0 auto}
+        .chat-screen{padding:12px;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+        .chat-header{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border-radius:12px;padding:8px 12px;margin-bottom:2px}
+        .avatar-img{width:30px;height:30px;border-radius:50%;object-fit:contain;flex-shrink:0}
+        .chat-header-text{flex:1;min-width:0}
+        .chat-header-text p{color:#fff;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .chat-header-text span{color:rgba(255,255,255,0.4);font-size:0.6rem}
+        .online-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0}
+        .bubble{
+          padding:8px 12px;border-radius:14px;
+          font-size:0.7rem;line-height:1.45;
+          word-wrap:break-word;word-break:break-word;
+          max-width:82%;
+        }
+        .bubble-ai{
+          background:rgba(59,82,212,0.35);
+          border:1px solid rgba(59,82,212,0.3);
+          color:rgba(255,255,255,0.9);
+          border-bottom-left-radius:3px;
+          align-self:flex-start;
+          margin-right:auto;
+        }
+        .bubble-user{
+          background:var(--yellow);
+          color:var(--navy);
+          font-weight:600;
+          border-bottom-right-radius:3px;
+          align-self:flex-end;
+          margin-left:auto;
+        }
+        .bubble-typing{
+          display:flex;gap:4px;align-items:center;
+          padding:10px 14px;
+          align-self:flex-start;
+          background:rgba(59,82,212,0.35);
+          border:1px solid rgba(59,82,212,0.3);
+          border-radius:14px;border-bottom-left-radius:3px;
+        }
+        .bubble-typing span{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.4);animation:typing 1.2s infinite}
         .bubble-typing span:nth-child(2){animation-delay:.2s}
         .bubble-typing span:nth-child(3){animation-delay:.4s}
-        .phone-points{margin:8px 16px 16px;background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(251,191,36,0.05));border:1px solid rgba(251,191,36,0.3);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
-        .points-icon{font-size:1.4rem}
-        .points-text p{color:var(--yellow);font-size:0.75rem;font-weight:700}
-        .points-text span{color:rgba(255,255,255,0.5);font-size:0.65rem}
-        .points-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden}
+        .phone-points{margin:6px 12px 12px;background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(251,191,36,0.05));border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+        .points-icon{font-size:1.2rem;flex-shrink:0}
+        .points-text{flex:1;min-width:0}
+        .points-text p{color:var(--yellow);font-size:0.7rem;font-weight:700}
+        .points-text span{color:rgba(255,255,255,0.5);font-size:0.6rem}
+        .points-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden}
         .points-bar{height:100%;width:62%;background:var(--yellow);border-radius:99px}
-        .float-card{position:absolute;background:rgba(255,255,255,0.08);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;animation:float 5s ease-in-out infinite}
+        .float-card{position:absolute;background:rgba(255,255,255,0.08);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:10px;animation:float 5s ease-in-out infinite}
         .float-card.left{left:-60px;top:30%}
         .float-card.right{right:-50px;bottom:25%;animation-delay:2.5s}
-        .float-text p{color:#fff;font-size:0.72rem;font-weight:600;white-space:nowrap}
-        .float-text span{color:rgba(255,255,255,0.45);font-size:0.62rem}
+        .float-text p{color:#fff;font-size:0.7rem;font-weight:600;white-space:nowrap}
+        .float-text span{color:rgba(255,255,255,0.45);font-size:0.6rem}
 
+        /* ── SECTIONS ── */
         section{padding:96px 5%}
         .section-label{display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:16px}
         .section-label::before{content:'';display:block;width:16px;height:2px;background:var(--blue)}
@@ -300,7 +341,7 @@ function LandingPage() {
         .plan{border:2px solid #E2E8F0;border-radius:28px;padding:40px 36px;flex:1;min-width:260px;max-width:340px;transition:transform .2s}
         .plan:hover{transform:translateY(-4px)}
         .plan.featured{background:var(--navy);border-color:var(--navy);position:relative}
-        .plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow);color:var(--navy);font-size:0.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 18px;border-radius:99px}
+        .plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow);color:var(--navy);font-size:0.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 18px;border-radius:99px;white-space:nowrap}
         .plan-name{font-family:'Fredoka',sans-serif;font-size:1.2rem;margin-bottom:8px;color:var(--navy)}
         .plan.featured .plan-name{color:#fff}
         .plan-price{font-family:'Fredoka',sans-serif;font-size:3rem;font-weight:700;line-height:1;margin-bottom:6px;color:var(--navy)}
@@ -319,16 +360,6 @@ function LandingPage() {
         .final-cta h2{font-family:'Fredoka',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;color:#fff;margin-bottom:16px;line-height:1.2}
         .final-cta p{font-size:1.05rem;color:rgba(255,255,255,0.6);line-height:1.7;max-width:520px;margin:0 auto 40px}
         .final-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-
-        .testimonials{background:var(--off)}
-        .testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:48px}
-        .testi-card{background:#fff;border-radius:20px;padding:28px;border:1.5px solid #E2E8F0}
-        .stars{color:var(--yellow);font-size:0.9rem;margin-bottom:14px}
-        .testi-card p{font-size:0.9rem;color:var(--text);line-height:1.7;margin-bottom:20px}
-        .testi-author{display:flex;align-items:center;gap:12px}
-        .testi-ava{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-        .testi-author strong{display:block;font-size:0.88rem;color:var(--navy)}
-        .testi-author span{font-size:0.78rem;color:var(--muted)}
 
         footer{background:var(--navy);padding:60px 5% 36px}
         .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
@@ -359,6 +390,9 @@ function LandingPage() {
         @media(max-width:600px){
           .nav-links{display:none}
           .footer-grid{grid-template-columns:1fr}
+          .logo{font-size:1.3rem}
+          .btn-nav{padding:6px 12px;font-size:0.78rem}
+          .lang-pill{padding:3px 8px;font-size:0.7rem}
         }
       `}</style>
 
@@ -375,9 +409,9 @@ function LandingPage() {
             <li key={i}><a href={['#features','#how','#mission','#pricing'][i]}>{l}</a></li>
           ))}
         </ul>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div className="nav-right">
           <button className={`lang-pill${lang==='fr'?' active':''}`} onClick={() => setLang('fr')}>FR</button>
-          <button className={`lang-pill${lang==='kr'?' active':''}`} onClick={() => setLang('kr')}>KREYÒL</button>
+          <button className={`lang-pill${lang==='kr'?' active':''}`} onClick={() => setLang('kr')}>KR</button>
           <button className="btn-nav" onClick={() => router.push('/auth')}>{c.navCta}</button>
         </div>
       </nav>
@@ -398,12 +432,14 @@ function LandingPage() {
             <p className="trust-text"><strong>{c.trustLabel}</strong></p>
           </div>
         </div>
+
         <div className="hero-visual">
           <div style={{ position:'relative' }}>
             <div className="float-card left">
-              <div style={{ fontSize:'1.4rem' }}>⭐</div>
+              <div style={{ fontSize:'1.3rem' }}>⭐</div>
               <div className="float-text"><p>{c.floatLeft.label}</p><span>{c.floatLeft.sub}</span></div>
             </div>
+
             <div className="phone-frame">
               <div className="phone-status">
                 <span>9:41</span><div className="phone-notch" /><span>●●●</span>
@@ -412,23 +448,28 @@ function LandingPage() {
                 <div className="chat-header">
                   <img src="/novere_logo.png" alt="" className="avatar-img" />
                   <div className="chat-header-text">
-                    <p>{c.phonePal}</p><span>{c.phoneLang}</span>
+                    <p>{c.phonePal}</p>
+                    <span>{c.phoneLang}</span>
                   </div>
                   <div className="online-dot" />
                 </div>
                 <div className="bubble bubble-ai">{c.phoneBubble1}</div>
                 <div className="bubble bubble-user">{c.phoneBubble2}</div>
                 <div className="bubble bubble-ai">{c.phoneBubble3}</div>
-                <div className="bubble bubble-typing"><span /><span /><span /></div>
+                <div className="bubble-typing"><span /><span /><span /></div>
               </div>
               <div className="phone-points">
                 <div className="points-icon">⭐</div>
-                <div className="points-text"><p>{c.phonePoints}</p><span>{c.phonePointsSub}</span></div>
+                <div className="points-text">
+                  <p>{c.phonePoints}</p>
+                  <span>{c.phonePointsSub}</span>
+                </div>
                 <div className="points-bar-wrap"><div className="points-bar" /></div>
               </div>
             </div>
+
             <div className="float-card right">
-              <div style={{ fontSize:'1.4rem' }}>🔮</div>
+              <div style={{ fontSize:'1.3rem' }}>🔮</div>
               <div className="float-text"><p>{c.floatRight.label}</p><span>{c.floatRight.sub}</span></div>
             </div>
           </div>
@@ -509,33 +550,21 @@ function LandingPage() {
               {plan.featured && <div className="plan-badge">⭐ Le plus populaire</div>}
               <div className="plan-name">{plan.name}</div>
               <div className="plan-price">
-                {plan.cents ? <>{plan.price}<span style={{ fontSize:'1.2rem', color: plan.featured ? 'rgba(255,255,255,0.5)' : 'var(--muted)' }}>{plan.cents}</span></> : plan.price}
+                {plan.cents
+                  ? <>{plan.price}<span style={{ fontSize:'1.2rem', color: plan.featured ? 'rgba(255,255,255,0.5)' : 'var(--muted)' }}>{plan.cents}</span></>
+                  : plan.price
+                }
               </div>
               <div className="plan-period">{plan.period}</div>
               <ul className="plan-feats">
                 {plan.feats.map((f, j) => <li key={j}><span className="check">✓</span>{f}</li>)}
               </ul>
-              <button className="btn-plan" onClick={() => plan.cta.includes('contac') || plan.cta.includes('contact') ? null : router.push('/auth')}>
+              <button
+                className="btn-plan"
+                onClick={() => plan.cta.toLowerCase().includes('contact') || plan.cta.toLowerCase().includes('contac') ? null : router.push('/auth')}
+              >
                 {plan.cta}
               </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="testimonials">
-        <div className="section-label">{c.testiEyebrow}</div>
-        <h2 className="section-title">{c.testiTitle}</h2>
-        <div className="testi-grid">
-          {c.testis.map((t, i) => (
-            <div key={i} className="testi-card">
-              <div className="stars">★★★★★</div>
-              <p>{t.quote}</p>
-              <div className="testi-author">
-                <div className="testi-ava" style={{ background:t.bg }}>{t.ava}</div>
-                <div><strong>{t.name}</strong><span>{t.role}</span></div>
-              </div>
             </div>
           ))}
         </div>

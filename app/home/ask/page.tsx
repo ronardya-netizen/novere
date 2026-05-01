@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
@@ -14,6 +14,13 @@ const PALETTES: Record<string, any> = {
   storm:   { main: '#475569', accent: '#BAE6FD', glow: 'rgba(71,85,105,.4)'   },
   gold:    { main: '#D97706', accent: '#FEF3C7', glow: 'rgba(217,119,6,.4)'   },
   night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
+}
+
+const CREATURE_THEMES: Record<string, { world: string; obstacles: string[]; bg: string; ground: string; emoji: string }> = {
+  land:   { world: 'Forêt',     obstacles: ['🪨','🌲','🍄'], bg: '#1a3a1a', ground: '#2d5a1b', emoji: '🐾' },
+  sea:    { world: 'Océan',     obstacles: ['🪼','🦈','🐚'], bg: '#0a1628', ground: '#1a4a6b', emoji: '🌊' },
+  sky:    { world: 'Ciel',      obstacles: ['⛅','⚡','🌪️'], bg: '#1a2a4a', ground: '#4a7ab5', emoji: '🕊️' },
+  cosmic: { world: 'Cosmos',    obstacles: ['☄️','🌑','💫'], bg: '#0a0a1a', ground: '#1a0a3a', emoji: '✨' },
 }
 
 const SUBJECTS = [
@@ -34,42 +41,45 @@ const MUSIC: Record<string, { url: string; label: string }> = {
 
 const T = {
   fr: {
-    title: 'Demande à',
-    subtitle: 'Choisis une matière et commence',
-    subject: 'Matière',
-    startSession: 'Commencer la session →',
+    title: 'Demande à', subtitle: 'Choisis une matière et commence',
+    subject: 'Matière', startSession: 'Commencer la session →',
     typeMessage: 'Pose ta question...',
     endSession: 'Terminer la session',
-    sessionSaved: 'Session sauvegardée! +',
-    points: 'pts ⭐',
-    pomodoroLabel: 'Focus',
-    musicLabel: 'Musique de focus',
+    sessionSaved: 'Session sauvegardée! +', points: 'pts ⭐',
+    pomodoroLabel: 'Focus', musicLabel: 'Musique de focus',
     saveFlashcard: 'Sauvegarder en flashcard',
     flashcardSaved: '✓ Flashcard sauvegardée!',
     flashcardsTitle: 'Mes flashcards',
     noFlashcards: 'Pas encore de flashcards. Sauvegarde une réponse pendant ta session!',
     back: 'Réponse',
+    breakTitle: 'Pause de 5 minutes! 🎉',
+    breakSub: 'Tu as complété un Pomodoro! Joue un peu avant de continuer.',
+    breakContinue: 'Continuer la session →',
+    breakScore: 'Score',
   },
   cr: {
-    title: 'Mande',
-    subtitle: 'Chwazi yon sijè epi kòmanse',
-    subject: 'Sijè',
-    startSession: 'Kòmanse sesyon →',
+    title: 'Mande', subtitle: 'Chwazi yon sijè epi kòmanse',
+    subject: 'Sijè', startSession: 'Kòmanse sesyon →',
     typeMessage: 'Poze kesyon ou...',
     endSession: 'Fini sesyon',
-    sessionSaved: 'Sesyon sove! +',
-    points: 'pwen ⭐',
-    pomodoroLabel: 'Fokis',
-    musicLabel: 'Mizik fokis',
+    sessionSaved: 'Sesyon sove! +', points: 'pwen ⭐',
+    pomodoroLabel: 'Fokis', musicLabel: 'Mizik fokis',
     saveFlashcard: 'Sove kòm flashcard',
     flashcardSaved: '✓ Flashcard sove!',
     flashcardsTitle: 'Flashcard mwen yo',
-    noFlashcards: 'Pa gen flashcard ankò. Sove yon repons pandan sesyon ou!',
+    noFlashcards: 'Pa gen flashcard ankò.',
     back: 'Repons',
+    breakTitle: 'Repo 5 minit! 🎉',
+    breakSub: 'Ou fini yon Pomodoro! Jwe yon ti kras anvan ou kontinye.',
+    breakContinue: 'Kontinye sesyon →',
+    breakScore: 'Pwen',
   }
 }
 
-const POMODORO = 25 * 60
+const POMODORO    = 25 * 60
+const BREAK_TIME  = 5  * 60
+const GAME_TYPES  = ['memory', 'dodge', 'tap', 'breathe'] as const
+type GameType = typeof GAME_TYPES[number]
 
 type Message = {
   role: 'user' | 'assistant'
@@ -95,6 +105,426 @@ function buildImageUrl(prompt: string): string {
   return `https://image.pollinations.ai/prompt/${encoded}?width=400&height=300&nologo=true`
 }
 
+// ── MEMORY GAME ───────────────────────────────────────────────────
+function MemoryGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
+  const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
+  const baseEmojis = [...theme.obstacles, '⭐', '🎯', '🏆', '💎']
+  const pairs = [...baseEmojis.slice(0, 6), ...baseEmojis.slice(0, 6)]
+  const [cards] = useState(() => pairs.map((e, i) => ({ id: i, emoji: e, matched: false })).sort(() => Math.random() - 0.5))
+  const [flipped, setFlipped]   = useState<number[]>([])
+  const [matched, setMatched]   = useState<number[]>([])
+  const [moves, setMoves]       = useState(0)
+  const [checking, setChecking] = useState(false)
+
+  const flip = (id: number) => {
+    if (checking || flipped.includes(id) || matched.includes(id)) return
+    if (flipped.length === 1) {
+      const newFlipped = [...flipped, id]
+      setFlipped(newFlipped)
+      setMoves(m => m + 1)
+      setChecking(true)
+      const [a, b] = [cards.find(c => c.id === flipped[0])!, cards.find(c => c.id === id)!]
+      setTimeout(() => {
+        if (a.emoji === b.emoji) {
+          const newMatched = [...matched, a.id, b.id]
+          setMatched(newMatched)
+          setFlipped([])
+          if (newMatched.length === cards.length) onComplete(Math.max(100 - moves * 5, 10))
+        } else {
+          setFlipped([])
+        }
+        setChecking(false)
+      }, 800)
+    } else {
+      setFlipped([id])
+    }
+  }
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 16 }}>
+        {palName} te défie! Trouve toutes les paires 🃏 · {moves} coups
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, maxWidth: 320, margin: '0 auto' }}>
+        {cards.map(card => {
+          const isVisible = flipped.includes(card.id) || matched.includes(card.id)
+          return (
+            <div key={card.id} onClick={() => flip(card.id)} style={{
+              width: '100%', aspectRatio: '1', borderRadius: 12,
+              background: isVisible ? palette.main : 'rgba(255,255,255,.1)',
+              border: `2px solid ${isVisible ? palette.accent : 'rgba(255,255,255,.2)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, cursor: 'pointer', transition: 'all .2s',
+              opacity: matched.includes(card.id) ? .5 : 1,
+            }}>
+              {isVisible ? card.emoji : '?'}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── DODGE GAME ────────────────────────────────────────────────────
+function DodgeGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
+  const theme     = CREATURE_THEMES[creature] || CREATURE_THEMES.land
+  const [palY, setPalY]         = useState(60)
+  const [obstacles, setObstacles] = useState<{ x: number; emoji: string; id: number }[]>([])
+  const [score, setScore]       = useState(0)
+  const [alive, setAlive]       = useState(true)
+  const [started, setStarted]   = useState(false)
+  const frameRef  = useRef<any>(null)
+  const obsRef    = useRef(obstacles)
+  const palYRef   = useRef(palY)
+  const scoreRef  = useRef(0)
+  obsRef.current  = obstacles
+  palYRef.current = palY
+
+  const jump = useCallback(() => {
+    if (!started) { setStarted(true); return }
+    if (!alive) return
+    setPalY(20)
+    setTimeout(() => setPalY(60), 500)
+  }, [alive, started])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.code === 'Space') { e.preventDefault(); jump() } }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [jump])
+
+  useEffect(() => {
+    if (!started || !alive) return
+    const obstacleInterval = setInterval(() => {
+      setObstacles(prev => [...prev, { x: 100, emoji: theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)], id: Date.now() }])
+    }, 1800)
+    return () => clearInterval(obstacleInterval)
+  }, [started, alive, theme])
+
+  useEffect(() => {
+    if (!started || !alive) return
+    frameRef.current = setInterval(() => {
+      setObstacles(prev => {
+        const updated = prev.map(o => ({ ...o, x: o.x - 3 })).filter(o => o.x > -10)
+        // Collision detection — pal is at x=8-18, y=palYRef.current to +20
+        for (const obs of updated) {
+          if (obs.x < 18 && obs.x > 5 && palYRef.current > 45) {
+            setAlive(false)
+            clearInterval(frameRef.current)
+            setTimeout(() => onComplete(scoreRef.current), 1500)
+            return updated
+          }
+        }
+        return updated
+      })
+      scoreRef.current += 1
+      setScore(s => s + 1)
+    }, 50)
+    return () => clearInterval(frameRef.current)
+  }, [started, alive, onComplete])
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 8 }}>
+        {!started ? 'Appuie pour commencer!' : `Score: ${score}`}
+      </p>
+      <div
+        onClick={jump}
+        style={{
+          width: '100%', maxWidth: 360, height: 120, margin: '0 auto',
+          background: theme.bg, borderRadius: 16, position: 'relative',
+          overflow: 'hidden', cursor: 'pointer',
+          border: `2px solid ${palette.main}`,
+        }}
+      >
+        {/* Ground */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 28, background: theme.ground, borderRadius: '0 0 14px 14px' }} />
+
+        {/* Pal */}
+        <div style={{ position: 'absolute', left: '8%', bottom: `${100 - palY}%`, fontSize: 28, transition: 'bottom .15s ease' }}>
+          {alive ? '🙂' : '😵'}
+        </div>
+
+        {/* Obstacles */}
+        {obstacles.map(obs => (
+          <div key={obs.id} style={{ position: 'absolute', bottom: 24, left: `${obs.x}%`, fontSize: 24 }}>
+            {obs.emoji}
+          </div>
+        ))}
+
+        {/* Not started overlay */}
+        {!started && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', borderRadius: 14 }}>
+            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 16 }}>Appuie / Espace pour sauter!</p>
+          </div>
+        )}
+      </div>
+      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, marginTop: 8 }}>
+        {palName} doit éviter les obstacles du {theme.world}!
+      </p>
+    </div>
+  )
+}
+
+// ── TAP GAME ──────────────────────────────────────────────────────
+function TapGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
+  const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
+  const [targets, setTargets]   = useState<{ id: number; x: number; y: number; emoji: string }[]>([])
+  const [score, setScore]       = useState(0)
+  const [timeLeft, setTimeLeft] = useState(30)
+  const [started, setStarted]   = useState(false)
+  const doneRef = useRef(false)
+
+  useEffect(() => {
+    if (!started) return
+    const timer = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timer)
+          if (!doneRef.current) { doneRef.current = true; setTimeout(() => onComplete(score), 500) }
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [started])
+
+  useEffect(() => {
+    if (!started || timeLeft === 0) return
+    const spawn = setInterval(() => {
+      setTargets(prev => [...prev.slice(-6), {
+        id: Date.now(),
+        x: 5 + Math.random() * 80,
+        y: 10 + Math.random() * 70,
+        emoji: theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)],
+      }])
+    }, 800)
+    return () => clearInterval(spawn)
+  }, [started, timeLeft, theme])
+
+  const hit = (id: number) => {
+    setTargets(prev => prev.filter(t => t.id !== id))
+    setScore(s => s + 10)
+  }
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, padding: '0 8px' }}>
+        <p style={{ color: '#FBBF24', fontWeight: 700, fontSize: 14 }}>Score: {score}</p>
+        <p style={{ color: timeLeft <= 10 ? '#EF4444' : 'rgba(255,255,255,.6)', fontWeight: 700, fontSize: 14 }}>{timeLeft}s</p>
+      </div>
+      <div
+        onClick={() => !started && setStarted(true)}
+        style={{
+          width: '100%', maxWidth: 360, height: 200, margin: '0 auto',
+          background: theme.bg, borderRadius: 16, position: 'relative',
+          overflow: 'hidden', cursor: started ? 'default' : 'pointer',
+          border: `2px solid ${palette.main}`,
+        }}
+      >
+        {!started ? (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 16 }}>Appuie pour commencer!</p>
+          </div>
+        ) : timeLeft === 0 ? (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+            <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 20 }}>Terminé! 🎉</p>
+            <p style={{ color: '#fff', fontSize: 16 }}>Score: {score}</p>
+          </div>
+        ) : (
+          targets.map(tgt => (
+            <div key={tgt.id} onClick={() => hit(tgt.id)} style={{
+              position: 'absolute', left: `${tgt.x}%`, top: `${tgt.y}%`,
+              fontSize: 28, cursor: 'pointer', userSelect: 'none',
+              animation: 'popIn .2s ease',
+              transform: 'translate(-50%, -50%)',
+            }}>
+              {tgt.emoji}
+            </div>
+          ))
+        )}
+      </div>
+      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, marginTop: 8 }}>
+        Attrape les créatures du {theme.world} de {palName}!
+      </p>
+    </div>
+  )
+}
+
+// ── BREATHE GAME ──────────────────────────────────────────────────
+function BreatheGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
+  const [phase, setPhase]   = useState<'inhale' | 'hold' | 'exhale'>('inhale')
+  const [count, setCount]   = useState(4)
+  const [cycles, setCycles] = useState(0)
+  const TOTAL_CYCLES = 4
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCount(c => {
+        if (c <= 1) {
+          setPhase(p => {
+            if (p === 'inhale') { setCount(4); return 'hold'   }
+            if (p === 'hold'  ) { setCount(6); return 'exhale' }
+            setCycles(cy => {
+              if (cy + 1 >= TOTAL_CYCLES) {
+                clearInterval(timer)
+                setTimeout(() => onComplete(100), 500)
+              }
+              return cy + 1
+            })
+            setCount(4)
+            return 'inhale'
+          })
+          return c
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const size = phase === 'inhale' ? 120 : phase === 'hold' ? 120 : 60
+  const label = phase === 'inhale' ? 'Inspire...' : phase === 'hold' ? 'Retiens...' : 'Expire...'
+  const color = phase === 'inhale' ? palette.main : phase === 'hold' ? palette.accent : '#22C55E'
+
+  return (
+    <div style={{ textAlign: 'center', padding: '8px 0' }}>
+      <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 20 }}>
+        {palName} t'accompagne pour te recentrer 🌬️ · {TOTAL_CYCLES - cycles} cycles restants
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+        <div style={{
+          width: size, height: size,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${color}44, ${color}11)`,
+          border: `3px solid ${color}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 1s ease',
+          boxShadow: `0 0 ${size/2}px ${color}44`,
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#fff', fontWeight: 800, fontSize: 28, fontFamily: 'var(--font-fredoka)' }}>{count}</p>
+            <p style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>{label}</p>
+          </div>
+        </div>
+      </div>
+      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>
+        Inspire 4s · Retiens 4s · Expire 6s
+      </p>
+    </div>
+  )
+}
+
+// ── BREAK OVERLAY ─────────────────────────────────────────────────
+function BreakOverlay({ creature, palette, palName, personalityEmoji, lang, t, onFinish }: {
+  creature: string; palette: any; palName: string; personalityEmoji: string;
+  lang: 'fr'|'cr'; t: typeof T['fr']; onFinish: () => void
+}) {
+  const [game]          = useState<GameType>(() => GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)])
+  const [breakLeft, setBreakLeft] = useState(BREAK_TIME)
+  const [gameScore, setGameScore] = useState<number | null>(null)
+  const [gameDone, setGameDone]   = useState(false)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBreakLeft(t => { if (t <= 1) { clearInterval(timer); return 0 } return t - 1 })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const breakMins = String(Math.floor(breakLeft / 60)).padStart(2, '0')
+  const breakSecs = String(breakLeft % 60).padStart(2, '0')
+
+  const handleGameComplete = (score: number) => {
+    setGameScore(score)
+    setGameDone(true)
+  }
+
+  const gameNames: Record<GameType, string> = {
+    memory:  '🃏 Carte mémoire',
+    dodge:   '🚀 Évite les obstacles',
+    tap:     '🎯 Clique vite',
+    breathe: '🌬️ Respiration guidée',
+  }
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 200,
+      background: `linear-gradient(160deg, #0B1F4B 0%, ${palette.main}33 100%)`,
+      display: 'flex', flexDirection: 'column',
+      fontFamily: 'var(--font-jakarta)',
+      animation: 'slideUp .4s ease',
+    }}>
+      {/* Header */}
+      <div style={{ padding: '20px 20px 16px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,.08)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ background: 'rgba(34,197,94,.2)', border: '1px solid #22C55E', borderRadius: 99, padding: '4px 14px' }}>
+            <span style={{ color: '#22C55E', fontWeight: 800, fontSize: 13 }}>🎉 +50 pts gagnés!</span>
+          </div>
+          <div style={{ background: 'rgba(251,191,36,.15)', border: '1px solid #FBBF24', borderRadius: 99, padding: '4px 14px' }}>
+            <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13 }}>⏱ {breakMins}:{breakSecs}</span>
+          </div>
+        </div>
+        <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
+          {t.breakTitle}
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>{gameNames[game]}</p>
+      </div>
+
+      {/* Game area */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px' }}>
+        {!gameDone ? (
+          <>
+            {game === 'memory'  && <MemoryGame  creature={creature} palette={palette} palName={palName} onComplete={handleGameComplete} />}
+            {game === 'dodge'   && <DodgeGame   creature={creature} palette={palette} palName={palName} onComplete={handleGameComplete} />}
+            {game === 'tap'     && <TapGame     creature={creature} palette={palette} palName={palName} onComplete={handleGameComplete} />}
+            {game === 'breathe' && <BreatheGame creature={creature} palette={palette} palName={palName} onComplete={handleGameComplete} />}
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <p style={{ fontSize: 48, marginBottom: 12 }}>🎊</p>
+            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#FBBF24', fontSize: 28, marginBottom: 8 }}>
+              Bien joué!
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 15, marginBottom: 4 }}>
+              {t.breakScore}: <strong style={{ color: '#fff' }}>{gameScore}</strong>
+            </p>
+            <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 13 }}>
+              {palName} est fier de toi! 🌟
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Continue button */}
+      <div style={{ padding: '12px 16px 24px', flexShrink: 0 }}>
+        <button
+          onClick={onFinish}
+          disabled={!gameDone && breakLeft > 0}
+          style={{
+            width: '100%', padding: '14px',
+            background: gameDone || breakLeft === 0
+              ? `linear-gradient(135deg, #0B1F4B, ${palette.main})`
+              : 'rgba(255,255,255,.08)',
+            color: gameDone || breakLeft === 0 ? '#FBBF24' : 'rgba(255,255,255,.3)',
+            border: 'none', borderRadius: 16, fontWeight: 800, fontSize: 15,
+            cursor: gameDone || breakLeft === 0 ? 'pointer' : 'default',
+            fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
+          }}
+        >
+          {gameDone || breakLeft === 0
+            ? t.breakContinue
+            : `Termine le jeu pour continuer · ${breakMins}:${breakSecs}`
+          }
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── MAIN PAGE ─────────────────────────────────────────────────────
 export default function AskPage() {
   const { child }  = useChild()
   const { lang }   = useLang()
@@ -113,6 +543,9 @@ export default function AskPage() {
   const [isWide, setIsWide]             = useState(false)
   const [ptsEarned, setPtsEarned]       = useState(0)
   const [sessionDone, setSessionDone]   = useState(false)
+  const [showBreak, setShowBreak]       = useState(false)
+  const [breakShown, setBreakShown]     = useState(false)
+  const [pomodorosCompleted, setPomodorosCompleted] = useState(0)
   const [flashcards, setFlashcards]     = useState<any[]>([])
   const [savedIds, setSavedIds]         = useState<Set<number>>(new Set())
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
@@ -132,7 +565,6 @@ export default function AskPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Timer — runs from the moment session starts
   useEffect(() => {
     if (!sessionStart) return
     const interval = setInterval(() => {
@@ -141,11 +573,21 @@ export default function AskPage() {
     return () => clearInterval(interval)
   }, [sessionStart])
 
+  // Trigger break when Pomodoro completes
+  useEffect(() => {
+    if (pomodoroOn && pomodoroLeft === 0 && !breakShown && phase === 'chat' && !sessionDone) {
+      const timeout = setTimeout(() => {
+        setShowBreak(true)
+        setBreakShown(true)
+      }, 2000)
+      return () => clearTimeout(timeout)
+    }
+  }, [pomodoroLeft, pomodoroOn, breakShown, phase, sessionDone])
+
   const loadFlashcards = async () => {
     if (!child) return
     const { data } = await supabase
-      .from('flashcards')
-      .select('*')
+      .from('flashcards').select('*')
       .eq('child_id', child.id)
       .order('created_at', { ascending: false })
     if (data) setFlashcards(data)
@@ -160,21 +602,43 @@ export default function AskPage() {
   const palette     = PALETTES[child.pal?.palette || 'ocean']
   const palName     = child.pal?.name || '...'
   const personality = child.personality || 'curious'
-  const palPalette  = child.pal?.palette || 'ocean'
   const creature    = child.pal?.creature || 'land'
+  const palPalette  = child.pal?.palette || 'ocean'
 
-  // ── Session starts immediately when child clicks "Commencer" ──
+  const personalityEmojis: Record<string, string> = { brave: '⚡', curious: '🔍', funny: '😄', calm: '🌊' }
+  const personalityEmoji = personalityEmojis[personality] || '⭐'
+
   const startSession = () => {
     const greeting = lang === 'fr'
-      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}** aujourd'hui${pomodoroOn ? ' en mode **Pomodoro** — 25 minutes de focus' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
-      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}** jodi a${pomodoroOn ? ' an mod **Pomodoro**' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
+      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}** aujourd'hui${pomodoroOn ? ' — le timer de 25 min est lancé!' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
+      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}** jodi a${pomodoroOn ? ' — timer 25 min kòmanse!' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
 
     setMessages([{ role: 'assistant', content: greeting }])
-    setSessionStart(new Date())  // timer starts immediately
+    setSessionStart(new Date())
     setElapsed(0)
     setPtsEarned(0)
     setSessionDone(false)
+    setShowBreak(false)
+    setBreakShown(false)
+    setPomodorosCompleted(0)
     setPhase('chat')
+  }
+
+  const handleBreakFinish = () => {
+    setShowBreak(false)
+    setPomodorosCompleted(p => p + 1)
+    // Reset timer for next Pomodoro
+    setSessionStart(new Date())
+    setElapsed(0)
+    setBreakShown(false)
+
+    const continueMsg: Message = {
+      role: 'assistant',
+      content: lang === 'fr'
+        ? `Excellent! Pause terminée 💪 Nouveau Pomodoro lancé — 25 minutes de focus sur **${subject}**. Tu peux continuer à me poser des questions!`
+        : `Ekselan! Repo fini 💪 Nouvo Pomodoro kòmanse — 25 minit fokis sou **${subject}**. Ou ka kontinye poze m kesyon!`,
+    }
+    setMessages(m => [...m, continueMsg])
   }
 
   const sendMessage = async () => {
@@ -191,27 +655,21 @@ export default function AskPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages:   newMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
           palName, personality, subject, lang,
-          pomodoro: pomodoroOn,
-          palPalette, creature,
+          pomodoro: pomodoroOn, palPalette, creature,
         }),
       })
       const data = await res.json()
       if (data.message) {
         const imageUrl = data.imagePrompt ? buildImageUrl(data.imagePrompt) : undefined
         setMessages(m => [...m, {
-          role: 'assistant',
-          content: data.message,
-          imageUrl,
-          shortAnswer:  data.shortAnswer  || '',
-          imagePrompt:  data.imagePrompt  || '',
-          savedAsFlashcard: false,
+          role: 'assistant', content: data.message,
+          imageUrl, shortAnswer: data.shortAnswer || '',
+          imagePrompt: data.imagePrompt || '', savedAsFlashcard: false,
         }])
       }
-    } catch (err) {
-      console.error(err)
-    }
+    } catch (err) { console.error(err) }
     setLoading(false)
   }
 
@@ -220,26 +678,21 @@ export default function AskPage() {
     const aiMsg   = messages[msgIndex]
     const userMsg = messages[msgIndex - 1]
     if (!aiMsg || aiMsg.role !== 'assistant') return
-
     await supabase.from('flashcards').insert({
-      child_id:     child.id,
-      subject,
-      question:     userMsg?.content || subject,
-      answer:       aiMsg.shortAnswer || aiMsg.content.slice(0, 150),
+      child_id: child.id, subject,
+      question: userMsg?.content || subject,
+      answer:   aiMsg.shortAnswer || aiMsg.content.slice(0, 150),
       image_prompt: aiMsg.imagePrompt || '',
     })
-
     setSavedIds(prev => new Set([...prev, msgIndex]))
-    setMessages(prev => prev.map((m, i) =>
-      i === msgIndex ? { ...m, savedAsFlashcard: true } : m
-    ))
+    setMessages(prev => prev.map((m, i) => i === msgIndex ? { ...m, savedAsFlashcard: true } : m))
   }
 
   const endSession = async () => {
     if (!child || !sessionStart) return
     const durationMins  = Math.max(1, Math.floor(elapsed / 60))
-    const completedFull = pomodoroOn && elapsed >= POMODORO
-    const pts           = completedFull ? 50 : 0
+    const completedFull = pomodoroOn && pomodorosCompleted > 0
+    const pts           = completedFull ? pomodorosCompleted * 50 : 0
 
     await supabase.from('study_sessions').insert({
       child_id: child.id, subject,
@@ -262,7 +715,7 @@ export default function AskPage() {
     setSessionStart(null)
   }
 
-  // ── SETUP SCREEN ─────────────────────────────────────────────────
+  // ── SETUP ───────────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
@@ -280,8 +733,6 @@ export default function AskPage() {
       </div>
 
       <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Subject */}
         <div>
           <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.subject}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -298,7 +749,6 @@ export default function AskPage() {
           </div>
         </div>
 
-        {/* Pomodoro toggle */}
         <div onClick={() => setPomodoroOn(p => !p)} style={{
           background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
           border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
@@ -306,10 +756,10 @@ export default function AskPage() {
           display: 'flex', alignItems: 'center', gap: 16,
           cursor: 'pointer', transition: 'all .2s',
         }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, transition: 'all .2s' }}>⏱️</div>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>⏱️</div>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>Mode Pomodoro</p>
-            <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min de focus · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
+            <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min focus + pause jeu · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
           </div>
           <div style={{ width: 48, height: 26, borderRadius: 99, background: pomodoroOn ? palette.main : '#E2E8F0', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: 3, left: pomodoroOn ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
@@ -317,15 +767,16 @@ export default function AskPage() {
         </div>
 
         {pomodoroOn && (
-          <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ fontSize: 22 }}>⭐</span>
-            <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
-              Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Complète <strong>25 minutes</strong> pour gagner <strong>50 points</strong>.
-            </p>
+          <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 22, flexShrink: 0 }}>⭐</span>
+            <div>
+              <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
+                Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Après 25 min, une pause de 5 min avec un mini-jeu thématique apparaît automatiquement. Chaque Pomodoro complété = <strong>50 points</strong>.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Music */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '16px 18px', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🎵</div>
           <div style={{ flex: 1 }}>
@@ -335,7 +786,6 @@ export default function AskPage() {
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
         </div>
 
-        {/* Flashcards button */}
         <button onClick={() => setPhase('flashcards')} style={{
           width: '100%', padding: '13px', background: '#fff',
           color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16,
@@ -360,7 +810,7 @@ export default function AskPage() {
     </div>
   )
 
-  // ── FLASHCARDS SCREEN ─────────────────────────────────────────────
+  // ── FLASHCARDS ───────────────────────────────────────────────────
   if (phase === 'flashcards') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '28px 32px 32px' : '20px 20px 28px' }}>
@@ -374,7 +824,7 @@ export default function AskPage() {
         {flashcards.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 20, padding: 36, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
             <p style={{ fontSize: 40, marginBottom: 12 }}>🗂️</p>
-            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 6 }}>{t.noFlashcards}</p>
+            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{t.noFlashcards}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isWide ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: 16 }}>
@@ -382,42 +832,20 @@ export default function AskPage() {
               const isFlipped = flippedCards.has(card.id)
               const imgUrl = card.image_prompt ? buildImageUrl(card.image_prompt) : null
               return (
-                <div key={card.id}
-                  onClick={() => setFlippedCards(prev => {
-                    const next = new Set(prev)
-                    if (next.has(card.id)) next.delete(card.id)
-                    else next.add(card.id)
-                    return next
-                  })}
-                  style={{
-                    background: isFlipped ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff',
-                    borderRadius: 20, overflow: 'hidden',
-                    border: `1.5px solid ${isFlipped ? palette.main : '#E2E8F0'}`,
-                    cursor: 'pointer', transition: 'all .3s',
-                    boxShadow: isFlipped ? `0 8px 24px ${palette.glow}` : 'none',
-                    minHeight: 200,
-                  }}
-                >
+                <div key={card.id} onClick={() => setFlippedCards(prev => { const next = new Set(prev); if (next.has(card.id)) next.delete(card.id); else next.add(card.id); return next })} style={{ background: isFlipped ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff', borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${isFlipped ? palette.main : '#E2E8F0'}`, cursor: 'pointer', transition: 'all .3s', minHeight: 200 }}>
                   {!isFlipped ? (
                     <>
-                      {imgUrl && (
-                        <div style={{ height: 140, overflow: 'hidden', position: 'relative' }}>
-                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(255,255,255,.9) 100%)' }} />
-                        </div>
-                      )}
+                      {imgUrl && <div style={{ height: 140, overflow: 'hidden' }}><img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} /></div>}
                       <div style={{ padding: '14px 16px' }}>
                         <span style={{ background: '#DBEAFE', color: '#3B52D4', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{card.subject}</span>
-                        <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 8, lineHeight: 1.5 }}>{card.question}</p>
+                        <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 8 }}>{card.question}</p>
                         <p style={{ color: '#94A3B8', fontSize: 11, marginTop: 8 }}>Appuie pour voir la réponse 👆</p>
                       </div>
                     </>
                   ) : (
-                    <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 200 }}>
-                      <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>{t.back}</p>
-                      <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.7, fontWeight: 500 }}>{card.answer}</p>
-                      <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 11, marginTop: 16 }}>Appuie pour cacher 👆</p>
+                    <div style={{ padding: '24px 20px', minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 12 }}>{t.back}</p>
+                      <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.7 }}>{card.answer}</p>
                     </div>
                   )}
                 </div>
@@ -429,9 +857,22 @@ export default function AskPage() {
     </div>
   )
 
-  // ── CHAT SCREEN ───────────────────────────────────────────────────
+  // ── CHAT ─────────────────────────────────────────────────────────
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)', position: 'relative' }}>
+
+      {/* Break overlay */}
+      {showBreak && (
+        <BreakOverlay
+          creature={creature}
+          palette={palette}
+          palName={palName}
+          personalityEmoji={personalityEmoji}
+          lang={lang}
+          t={t}
+          onFinish={handleBreakFinish}
+        />
+      )}
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)' }}>
@@ -444,22 +885,19 @@ export default function AskPage() {
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-fredoka)' }}>{palName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
-              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{subject} · {pomodoroOn ? 'Pomodoro' : 'Session libre'}</span>
+              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
+                {subject} · {pomodoroOn ? `Pomodoro ${pomodorosCompleted > 0 ? `· ${pomodorosCompleted}✓` : ''}` : 'Session libre'}
+              </span>
             </div>
           </div>
 
-          {/* Pomodoro timer — always visible when pomodoroOn */}
           {pomodoroOn && (
-            <div style={{
-              background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)',
-              border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`,
-              borderRadius: 12, padding: '6px 12px', textAlign: 'center', flexShrink: 0,
-            }}>
+            <div style={{ background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)', border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`, borderRadius: 12, padding: '6px 12px', textAlign: 'center', flexShrink: 0 }}>
               <p style={{ color: pomodoroLeft === 0 ? '#22C55E' : '#FBBF24', fontWeight: 800, fontSize: 15, fontFamily: 'var(--font-fredoka)', lineHeight: 1 }}>
-                {pomodoroLeft === 0 ? '🎉 +50' : `${pomodoroMins}:${pomodoroSecs}`}
+                {pomodoroLeft === 0 ? '🎮 Pause!' : `${pomodoroMins}:${pomodoroSecs}`}
               </p>
               <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700, marginTop: 2 }}>
-                {pomodoroLeft === 0 ? 'TERMINÉ!' : t.pomodoroLabel.toUpperCase()}
+                {pomodoroLeft === 0 ? 'JEU!' : t.pomodoroLabel.toUpperCase()}
               </p>
             </div>
           )}
@@ -479,8 +917,8 @@ export default function AskPage() {
         <div style={{ background: ptsEarned > 0 ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : '#FEF3C7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <p style={{ fontWeight: 700, color: ptsEarned > 0 ? '#065F46' : '#92400E', fontSize: 14 }}>
             {ptsEarned > 0
-              ? `${t.sessionSaved}${ptsEarned} ${t.points}`
-              : '⏱️ Complète 25 min pour gagner des points la prochaine fois!'
+              ? `${t.sessionSaved}${ptsEarned} ${t.points} · ${pomodorosCompleted} Pomodoro${pomodorosCompleted > 1 ? 's' : ''}`
+              : '⏱️ Complète un Pomodoro pour gagner des points!'
             }
           </p>
           <button onClick={() => { setPhase('setup'); setMessages([]); setSessionDone(false) }} style={{ background: ptsEarned > 0 ? '#065F46' : '#92400E', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}>
@@ -547,7 +985,7 @@ export default function AskPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input + end session bar */}
+      {/* Input + end session */}
       <div style={{ padding: '10px 14px 20px', background: '#0B1F4B', borderTop: '1px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
         {!sessionDone && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
@@ -569,48 +1007,39 @@ export default function AskPage() {
           </div>
         )}
 
-        {/* End session button */}
-        <button
-          onClick={endSession}
-          disabled={sessionDone}
-          style={{
-            width: '100%', padding: '11px',
-            background: sessionDone
-              ? 'rgba(255,255,255,.05)'
-              : pomodoroOn && elapsed >= POMODORO
-                ? 'rgba(34,197,94,.15)'
-                : 'rgba(239,68,68,.15)',
-            color: sessionDone
-              ? 'rgba(255,255,255,.2)'
-              : pomodoroOn && elapsed >= POMODORO
-                ? '#86EFAC'
-                : '#FCA5A5',
-            border: `1px solid ${
-              sessionDone
-                ? 'rgba(255,255,255,.05)'
-                : pomodoroOn && elapsed >= POMODORO
-                  ? 'rgba(34,197,94,.2)'
-                  : 'rgba(239,68,68,.2)'
-            }`,
-            borderRadius: 12, fontWeight: 700, fontSize: 13,
-            cursor: sessionDone ? 'default' : 'pointer',
-            fontFamily: 'var(--font-jakarta)',
-          }}
-        >
+        <button onClick={endSession} disabled={sessionDone} style={{
+          width: '100%', padding: '11px',
+          background: sessionDone
+            ? 'rgba(255,255,255,.05)'
+            : pomodorosCompleted > 0
+              ? 'rgba(34,197,94,.15)'
+              : 'rgba(239,68,68,.15)',
+          color: sessionDone
+            ? 'rgba(255,255,255,.2)'
+            : pomodorosCompleted > 0
+              ? '#86EFAC'
+              : '#FCA5A5',
+          border: `1px solid ${sessionDone ? 'rgba(255,255,255,.05)' : pomodorosCompleted > 0 ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)'}`,
+          borderRadius: 12, fontWeight: 700, fontSize: 13,
+          cursor: sessionDone ? 'default' : 'pointer',
+          fontFamily: 'var(--font-jakarta)',
+        }}>
           {sessionDone
             ? 'Session terminée'
-            : pomodoroOn && elapsed >= POMODORO
-              ? `Terminer · +50 pts ⭐ · ${Math.floor(elapsed / 60)}min`
+            : pomodorosCompleted > 0
+              ? `Terminer · +${pomodorosCompleted * 50} pts ⭐ · ${pomodorosCompleted} Pomodoro${pomodorosCompleted > 1 ? 's' : ''}`
               : pomodoroOn
-                ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (25min = points)`
+                ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (termine un Pomodoro pour les points)`
                 : `${t.endSession} · ${Math.floor(elapsed / 60)}min`
           }
         </button>
       </div>
 
       <style>{`
-        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
+        @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes typing   { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
+        @keyframes slideUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes popIn    { from{transform:translate(-50%,-50%) scale(0)} to{transform:translate(-50%,-50%) scale(1)} }
       `}</style>
     </div>
   )

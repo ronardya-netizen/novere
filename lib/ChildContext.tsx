@@ -36,16 +36,24 @@ export function ChildProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const fetchChild = async () => {
+    setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
+    if (!user) { setChild(null); setLoading(false); return }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('children')
       .select('*')
       .eq('parent_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle()
 
-    setChild(data ?? null)
+    if (error) {
+      console.error('ChildContext fetch error:', error)
+      setChild(null)
+    } else {
+      setChild(data ?? null)
+    }
     setLoading(false)
   }
 

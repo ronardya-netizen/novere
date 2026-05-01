@@ -39,18 +39,14 @@ const FEATURES = [
 ]
 
 const PERSONALITIES = [
-  { id: 'brave',   label: 'Courageux', icon: '⚡', color: '#EA580C', desc: 'Toujours prêt à relever un défi',        greeting: "Je suis prêt pour l'aventure! Allons explorer quelque chose d'incroyable ensemble." },
-  { id: 'curious', label: 'Curieux',   icon: '🔍', color: '#2563EB', desc: 'Pose toujours les meilleures questions',  greeting: "Oh! Il y a tellement de choses à découvrir! Par où commence-t-on?" },
-  { id: 'funny',   label: 'Drôle',     icon: '😄', color: '#D97706', desc: 'Apprendre est encore mieux en riant',    greeting: "Eh, tu sais quoi? Apprendre c'est comme une blague — ça devient meilleur avec la pratique!" },
-  { id: 'calm',    label: 'Calme',     icon: '🌊', color: '#16A34A', desc: 'Patient et toujours là pour toi',        greeting: "Prends une grande respiration. Je suis là, on va apprendre à notre propre rythme." },
+  { id: 'brave',   label: 'Courageux', icon: '⚡', color: '#EA580C', desc: 'Toujours prêt à relever un défi',       greeting: "Je suis prêt pour l'aventure! Allons explorer quelque chose d'incroyable ensemble." },
+  { id: 'curious', label: 'Curieux',   icon: '🔍', color: '#2563EB', desc: 'Pose toujours les meilleures questions', greeting: "Oh! Il y a tellement de choses à découvrir! Par où commence-t-on?" },
+  { id: 'funny',   label: 'Drôle',     icon: '😄', color: '#D97706', desc: 'Apprendre est encore mieux en riant',   greeting: "Eh, tu sais quoi? Apprendre c'est comme une blague — ça devient meilleur avec la pratique!" },
+  { id: 'calm',    label: 'Calme',     icon: '🌊', color: '#16A34A', desc: 'Patient et toujours là pour toi',       greeting: "Prends une grande respiration. Je suis là, on va apprendre à notre propre rythme." },
 ]
 
 function PalSVG({ creature, shape, palette, feature, size = 200 }: {
-  creature: string
-  shape: string
-  palette: typeof PALETTES[0]
-  feature: string
-  size?: number
+  creature: string; shape: string; palette: typeof PALETTES[0]; feature: string; size?: number
 }) {
   const bodyShape = BODY_SHAPES.find(b => b.id === shape)?.shape || BODY_SHAPES[0].shape
 
@@ -142,8 +138,8 @@ function PalSVG({ creature, shape, palette, feature, size = 200 }: {
 }
 
 export default function OnboardingPage() {
-  const router  = useRouter()
-  const { refresh } = useChild()
+  const router              = useRouter()
+  const { child, loading, refresh } = useChild()
 
   const [step, setStep]               = useState(0)
   const [childName, setChildName]     = useState('')
@@ -157,6 +153,13 @@ export default function OnboardingPage() {
   const [saving, setSaving]           = useState(false)
   const [speaking, setSpeaking]       = useState(false)
   const [animIn, setAnimIn]           = useState(true)
+
+  // ── GUARD: if child already exists, skip onboarding ──────────────
+  useEffect(() => {
+    if (!loading && child) {
+      router.push('/home')
+    }
+  }, [loading, child])
 
   const palette = PALETTES.find(p => p.id === paletteId) || PALETTES[0]
   const pers    = PERSONALITIES.find(p => p.id === personality) || PERSONALITIES[1]
@@ -173,39 +176,46 @@ export default function OnboardingPage() {
     }
   }, [step, palName])
 
- const finish = async () => {
-  setSaving(true)
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) { router.push('/auth'); return }
+  const finish = async () => {
+    setSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/auth'); return }
 
-  const palData = { creature, bodyShape, palette: paletteId, feature, name: palName }
+    const palData = { creature, bodyShape, palette: paletteId, feature, name: palName }
 
-  const { error } = await supabase.from('children').insert({
-    parent_id:   user.id,
-    name:        childName,
-    grade,
-    hero:        '🦸',
-    hero_name:   palName,
-    pal:         palData,
-    personality,
-  })
+    const { error } = await supabase.from('children').insert({
+      parent_id:   user.id,
+      name:        childName,
+      grade,
+      hero:        '🦸',
+      hero_name:   palName,
+      pal:         palData,
+      personality,
+    })
 
-  if (!error) {
-    try {
-      await Promise.race([
-        refresh(),
-        new Promise(resolve => setTimeout(resolve, 3000))
-      ])
-    } catch (e) {
-      console.log('refresh error', e)
+    if (!error) {
+      try {
+        await Promise.race([
+          refresh(),
+          new Promise(resolve => setTimeout(resolve, 3000))
+        ])
+      } catch (e) {
+        console.log('refresh error', e)
+      }
+      router.push('/home')
+    } else {
+      console.error('Insert error:', error)
+      setSaving(false)
     }
-    router.push('/home')
-  } else {
-    console.error('Insert error:', error)
   }
-  setSaving(false)
-}
 
+  // Show nothing while checking for existing child
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:'#0B1F4B', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ width:40, height:40, borderRadius:'50%', border:'3px solid rgba(255,255,255,.1)', borderTopColor:'#FBBF24', animation:'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
 
   return (
     <div style={{
@@ -216,18 +226,15 @@ export default function OnboardingPage() {
       fontFamily: 'var(--font-jakarta)', overflowX: 'hidden',
       position: 'relative',
     }}>
-      {/* Static background blobs — no Math.random() */}
       <div style={{ position:'fixed', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(37,99,235,.15) 0%, transparent 70%)', top:'10%', right:'5%', pointerEvents:'none' }} />
       <div style={{ position:'fixed', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(251,191,36,.08) 0%, transparent 70%)', bottom:'15%', left:'8%', pointerEvents:'none' }} />
       <div style={{ position:'fixed', width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(124,58,237,.1) 0%, transparent 70%)', top:'50%', left:'2%', pointerEvents:'none' }} />
 
-      {/* Progress bar */}
       {step > 0 && step < 5 && (
         <div style={{ position:'fixed', top:0, left:0, right:0, height:4, background:'rgba(255,255,255,.1)', zIndex:100 }}>
           <div style={{ height:'100%', width:`${(step/4)*100}%`, background:palette.main, transition:'width .4s ease', borderRadius:'0 99px 99px 0' }} />
         </div>
       )}
-
       {step > 0 && step < 5 && (
         <div style={{ position:'fixed', top:20, right:24, color:'rgba(255,255,255,.3)', fontSize:13, fontWeight:700 }}>
           {step} / 4
@@ -244,18 +251,12 @@ export default function OnboardingPage() {
         {/* STEP 0 */}
         {step === 0 && (
           <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:72, marginBottom:8, display:'inline-block', animation:'float 3s ease-in-out infinite' }}>
-              😊
-            </div>
-            <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>
-              NOVERE
-            </h1>
+            <div style={{ fontSize:72, marginBottom:8, display:'inline-block', animation:'float 3s ease-in-out infinite' }}>😊</div>
+            <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>NOVERE</h1>
             <p style={{ color:'rgba(255,255,255,.55)', fontSize:16, lineHeight:1.7, maxWidth:380, margin:'0 auto 12px' }}>
               Un univers où les enfants curieux partent en aventures d'apprentissage.
             </p>
-            <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>
-              Chaque explorateur a besoin d'un compagnon.
-            </p>
+            <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>Chaque explorateur a besoin d'un compagnon.</p>
             <div style={{ background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:24, padding:28, marginBottom:24, textAlign:'left' }}>
               <p style={{ color:'rgba(255,255,255,.5)', fontSize:13, fontWeight:700, marginBottom:16, textTransform:'uppercase', letterSpacing:'.06em' }}>
                 Parlez-nous de votre enfant
@@ -321,7 +322,6 @@ export default function OnboardingPage() {
             <div style={{ display:'flex', justifyContent:'center', marginBottom:32, animation:'float 3s ease-in-out infinite' }}>
               <PalSVG creature={creature} shape={bodyShape} palette={palette} feature={feature} size={140} />
             </div>
-
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Type de créature</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
@@ -336,21 +336,17 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Forme du corps</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                 {BODY_SHAPES.map(b => (
                   <button key={b.id} onClick={() => setBodyShape(b.id)} style={{ ...choiceBtn, background: bodyShape===b.id ? 'rgba(251,191,36,.15)' : 'rgba(255,255,255,.05)', border:`1.5px solid ${bodyShape===b.id ? '#FBBF24' : 'rgba(255,255,255,.1)'}` }}>
-                    <span style={{ fontSize:18 }}>
-                      {b.id==='round' ? '⭕' : b.id==='tall' ? '📏' : b.id==='sturdy' ? '🪨' : '🌫️'}
-                    </span>
+                    <span style={{ fontSize:18 }}>{b.id==='round'?'⭕':b.id==='tall'?'📏':b.id==='sturdy'?'🪨':'🌫️'}</span>
                     <p style={{ color:'#fff', fontWeight:600, fontSize:12 }}>{b.label}</p>
                   </button>
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Palette de couleurs</p>
               <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
@@ -359,7 +355,6 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom:32 }}>
               <p style={sectionLabel}>Trait distinctif</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
@@ -371,7 +366,6 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
-
             <button onClick={() => goTo(3)} style={{ ...btnStyle, background:'#FBBF24', color:'#0B1F4B', width:'100%', fontSize:15 }}>
               Presque fini! →
             </button>

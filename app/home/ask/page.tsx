@@ -44,6 +44,11 @@ const T = {
     points: 'pts ⭐',
     pomodoroLabel: 'Focus',
     musicLabel: 'Musique de focus',
+    saveFlashcard: 'Sauvegarder en flashcard',
+    flashcardSaved: '✓ Flashcard sauvegardée!',
+    flashcardsTitle: 'Mes flashcards',
+    noFlashcards: 'Pas encore de flashcards. Sauvegarde une réponse pendant ta session!',
+    back: 'Réponse',
   },
   cr: {
     title: 'Mande',
@@ -56,25 +61,38 @@ const T = {
     points: 'pwen ⭐',
     pomodoroLabel: 'Fokis',
     musicLabel: 'Mizik fokis',
+    saveFlashcard: 'Sove kòm flashcard',
+    flashcardSaved: '✓ Flashcard sove!',
+    flashcardsTitle: 'Flashcard mwen yo',
+    noFlashcards: 'Pa gen flashcard ankò. Sove yon repons pandan sesyon ou!',
+    back: 'Repons',
   }
 }
 
 const POMODORO = 25 * 60
 
-type Message = { role: 'user' | 'assistant'; content: string }
+type Message = {
+  role: 'user' | 'assistant'
+  content: string
+  imageUrl?: string
+  shortAnswer?: string
+  imagePrompt?: string
+  savedAsFlashcard?: boolean
+}
 
 function renderMarkdown(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={i} style={{ color: '#FBBF24', fontWeight: 800 }}>
-          {part.slice(2, -2)}
-        </strong>
-      )
+      return <strong key={i} style={{ color: '#FBBF24', fontWeight: 800 }}>{part.slice(2, -2)}</strong>
     }
     return <span key={i}>{part}</span>
   })
+}
+
+function buildImageUrl(prompt: string): string {
+  const encoded = encodeURIComponent(prompt + ', children illustration, colorful, safe for kids, no text')
+  return `https://image.pollinations.ai/prompt/${encoded}?width=400&height=300&nologo=true`
 }
 
 export default function AskPage() {
@@ -83,7 +101,7 @@ export default function AskPage() {
   const t          = T[lang]
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [phase, setPhase]               = useState<'setup' | 'chat'>('setup')
+  const [phase, setPhase]               = useState<'setup' | 'chat' | 'flashcards'>('setup')
   const [subject, setSubject]           = useState(SUBJECTS[0])
   const [pomodoroOn, setPomodoroOn]     = useState(true)
   const [messages, setMessages]         = useState<Message[]>([])
@@ -95,6 +113,9 @@ export default function AskPage() {
   const [isWide, setIsWide]             = useState(false)
   const [ptsEarned, setPtsEarned]       = useState(0)
   const [sessionDone, setSessionDone]   = useState(false)
+  const [flashcards, setFlashcards]     = useState<any[]>([])
+  const [savedIds, setSavedIds]         = useState<Set<number>>(new Set())
+  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
 
   const pomodoroLeft = Math.max(0, POMODORO - elapsed)
   const pomodoroMins = String(Math.floor(pomodoroLeft / 60)).padStart(2, '0')
@@ -111,6 +132,7 @@ export default function AskPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
+  // Timer — runs from the moment session starts
   useEffect(() => {
     if (!sessionStart) return
     const interval = setInterval(() => {
@@ -119,20 +141,37 @@ export default function AskPage() {
     return () => clearInterval(interval)
   }, [sessionStart])
 
+  const loadFlashcards = async () => {
+    if (!child) return
+    const { data } = await supabase
+      .from('flashcards')
+      .select('*')
+      .eq('child_id', child.id)
+      .order('created_at', { ascending: false })
+    if (data) setFlashcards(data)
+  }
+
+  useEffect(() => {
+    if (phase === 'flashcards') loadFlashcards()
+  }, [phase])
+
   if (!child) return null
 
   const palette     = PALETTES[child.pal?.palette || 'ocean']
   const palName     = child.pal?.name || '...'
   const personality = child.personality || 'curious'
+  const palPalette  = child.pal?.palette || 'ocean'
+  const creature    = child.pal?.creature || 'land'
 
+  // ── Session starts immediately when child clicks "Commencer" ──
   const startSession = () => {
     const greeting = lang === 'fr'
-      ? `Bonjour! Je suis ${palName}, ton compagnon d'apprentissage. On travaille sur **${subject}** aujourd'hui${pomodoroOn ? ' en mode **Pomodoro** — 25 minutes de focus' : ''}. Qu'est-ce qu'on explore? 🎯`
-      : `Bonjou! Mwen se ${palName}, konpayon aprantisaj ou. Nou ap travay sou **${subject}** jodi a${pomodoroOn ? ' an mod **Pomodoro**' : ''}. Kisa ou vle eksplore? 🎯`
+      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}** aujourd'hui${pomodoroOn ? ' en mode **Pomodoro** — 25 minutes de focus' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
+      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}** jodi a${pomodoroOn ? ' an mod **Pomodoro**' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
 
     setMessages([{ role: 'assistant', content: greeting }])
+    setSessionStart(new Date())  // timer starts immediately
     setElapsed(0)
-    setSessionStart(null)
     setPtsEarned(0)
     setSessionDone(false)
     setPhase('chat')
@@ -140,11 +179,6 @@ export default function AskPage() {
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
-
-    if (!sessionStart) {
-      setSessionStart(new Date())
-      setElapsed(0)
-    }
 
     const userMsg: Message = { role: 'user', content: input }
     const newMessages = [...messages, userMsg]
@@ -157,22 +191,48 @@ export default function AskPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages:  newMessages,
-          palName,
-          personality,
-          subject,
-          lang,
+          messages:   newMessages.map(m => ({ role: m.role, content: m.content })),
+          palName, personality, subject, lang,
           pomodoro: pomodoroOn,
+          palPalette, creature,
         }),
       })
       const data = await res.json()
       if (data.message) {
-        setMessages(m => [...m, { role: 'assistant', content: data.message }])
+        const imageUrl = data.imagePrompt ? buildImageUrl(data.imagePrompt) : undefined
+        setMessages(m => [...m, {
+          role: 'assistant',
+          content: data.message,
+          imageUrl,
+          shortAnswer:  data.shortAnswer  || '',
+          imagePrompt:  data.imagePrompt  || '',
+          savedAsFlashcard: false,
+        }])
       }
     } catch (err) {
       console.error(err)
     }
     setLoading(false)
+  }
+
+  const saveFlashcard = async (msgIndex: number) => {
+    if (!child || savedIds.has(msgIndex)) return
+    const aiMsg   = messages[msgIndex]
+    const userMsg = messages[msgIndex - 1]
+    if (!aiMsg || aiMsg.role !== 'assistant') return
+
+    await supabase.from('flashcards').insert({
+      child_id:     child.id,
+      subject,
+      question:     userMsg?.content || subject,
+      answer:       aiMsg.shortAnswer || aiMsg.content.slice(0, 150),
+      image_prompt: aiMsg.imagePrompt || '',
+    })
+
+    setSavedIds(prev => new Set([...prev, msgIndex]))
+    setMessages(prev => prev.map((m, i) =>
+      i === msgIndex ? { ...m, savedAsFlashcard: true } : m
+    ))
   }
 
   const endSession = async () => {
@@ -182,11 +242,9 @@ export default function AskPage() {
     const pts           = completedFull ? 50 : 0
 
     await supabase.from('study_sessions').insert({
-      child_id:      child.id,
-      subject,
-      technique:     pomodoroOn ? 'pomodoro' : 'free',
-      duration_mins: durationMins,
-      points_earned: pts,
+      child_id: child.id, subject,
+      technique: pomodoroOn ? 'pomodoro' : 'free',
+      duration_mins: durationMins, points_earned: pts,
     })
 
     if (pts > 0) {
@@ -204,21 +262,13 @@ export default function AskPage() {
     setSessionStart(null)
   }
 
-  // ── SETUP SCREEN ────────────────────────────────────────────────
+  // ── SETUP SCREEN ─────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
-
-      {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ animation: 'float 3s ease-in-out infinite' }}>
-            <PalSVG
-              creature={child.pal?.creature || 'land'}
-              shape={child.pal?.bodyShape || 'round'}
-              palette={palette}
-              feature={child.pal?.feature || 'eyes'}
-              size={72}
-            />
+            <PalSVG creature={creature} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={72} />
           </div>
           <div>
             <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: isWide ? 32 : 26, fontWeight: 700 }}>
@@ -229,13 +279,11 @@ export default function AskPage() {
         </div>
       </div>
 
-      <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Subject */}
         <div>
-          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-            {t.subject}
-          </p>
+          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.subject}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {SUBJECTS.map(s => (
               <button key={s} onClick={() => setSubject(s)} style={{
@@ -245,74 +293,41 @@ export default function AskPage() {
                 fontWeight: 700, fontSize: 13, cursor: 'pointer',
                 border: `1.5px solid ${subject === s ? '#0B1F4B' : '#E2E8F0'}`,
                 fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
-              }}>
-                {s}
-              </button>
+              }}>{s}</button>
             ))}
           </div>
         </div>
 
         {/* Pomodoro toggle */}
-        <div
-          onClick={() => setPomodoroOn(p => !p)}
-          style={{
-            background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
-            border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
-            borderRadius: 20, padding: '16px 20px',
-            display: 'flex', alignItems: 'center', gap: 16,
-            cursor: 'pointer', transition: 'all .2s',
-          }}
-        >
-          <div style={{
-            width: 52, height: 52, borderRadius: 16,
-            background: pomodoroOn ? palette.main : '#F1F5F9',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 24, flexShrink: 0, transition: 'all .2s',
-          }}>
-            ⏱️
-          </div>
+        <div onClick={() => setPomodoroOn(p => !p)} style={{
+          background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
+          border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
+          borderRadius: 20, padding: '16px 20px',
+          display: 'flex', alignItems: 'center', gap: 16,
+          cursor: 'pointer', transition: 'all .2s',
+        }}>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, transition: 'all .2s' }}>⏱️</div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>
-              Mode Pomodoro
-            </p>
-            <p style={{ color: '#64748B', fontSize: 13 }}>
-              {pomodoroOn
-                ? 'Activé · 25 min de focus · +50 pts'
-                : 'Désactivé · session libre · pas de points'
-              }
-            </p>
+            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>Mode Pomodoro</p>
+            <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min de focus · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
           </div>
-          {/* Toggle switch */}
-          <div style={{
-            width: 48, height: 26, borderRadius: 99,
-            background: pomodoroOn ? palette.main : '#E2E8F0',
-            position: 'relative', transition: 'background .2s', flexShrink: 0,
-          }}>
-            <div style={{
-              position: 'absolute', top: 3,
-              left: pomodoroOn ? 25 : 3,
-              width: 20, height: 20, borderRadius: '50%',
-              background: '#fff', transition: 'left .2s',
-              boxShadow: '0 1px 4px rgba(0,0,0,.2)',
-            }} />
+          <div style={{ width: 48, height: 26, borderRadius: 99, background: pomodoroOn ? palette.main : '#E2E8F0', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+            <div style={{ position: 'absolute', top: 3, left: pomodoroOn ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
           </div>
         </div>
 
-        {/* Points rule — only if pomodoro on */}
         {pomodoroOn && (
           <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'center' }}>
             <span style={{ fontSize: 22 }}>⭐</span>
             <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
-              Complète <strong>25 minutes</strong> sans interruption pour gagner <strong>50 points</strong>.
+              Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Complète <strong>25 minutes</strong> pour gagner <strong>50 points</strong>.
             </p>
           </div>
         )}
 
         {/* Music */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '16px 18px', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-            🎵
-          </div>
+          <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🎵</div>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14 }}>{t.musicLabel}</p>
             <p style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>{MUSIC[personality]?.label} · adapté à {palName}</p>
@@ -320,60 +335,121 @@ export default function AskPage() {
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
         </div>
 
-        {/* Start button */}
+        {/* Flashcards button */}
+        <button onClick={() => setPhase('flashcards')} style={{
+          width: '100%', padding: '13px', background: '#fff',
+          color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16,
+          fontWeight: 700, fontSize: 14, cursor: 'pointer',
+          fontFamily: 'var(--font-jakarta)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          🗂️ {t.flashcardsTitle}
+        </button>
+
         <button onClick={startSession} style={{
           width: '100%', padding: '16px',
           background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`,
           color: '#FBBF24', border: 'none', borderRadius: 16,
           fontWeight: 800, fontSize: 16, cursor: 'pointer',
-          fontFamily: 'var(--font-jakarta)',
-          boxShadow: `0 8px 24px ${palette.glow}`,
+          fontFamily: 'var(--font-jakarta)', boxShadow: `0 8px 24px ${palette.glow}`,
         }}>
           {t.startSession}
         </button>
       </div>
-
       <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`}</style>
     </div>
   )
 
-  // ── CHAT SCREEN ─────────────────────────────────────────────────
+  // ── FLASHCARDS SCREEN ─────────────────────────────────────────────
+  if (phase === 'flashcards') return (
+    <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
+      <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '28px 32px 32px' : '20px 20px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <button onClick={() => setPhase('setup')} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.6)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>←</button>
+          <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 26, fontWeight: 700 }}>🗂️ {t.flashcardsTitle}</h1>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 13, paddingLeft: 44 }}>Appuie sur une carte pour voir la réponse</p>
+      </div>
+      <div style={{ padding: isWide ? '24px 32px' : '20px 18px' }}>
+        {flashcards.length === 0 ? (
+          <div style={{ background: '#fff', borderRadius: 20, padding: 36, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>🗂️</p>
+            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 6 }}>{t.noFlashcards}</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: isWide ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: 16 }}>
+            {flashcards.map((card: any) => {
+              const isFlipped = flippedCards.has(card.id)
+              const imgUrl = card.image_prompt ? buildImageUrl(card.image_prompt) : null
+              return (
+                <div key={card.id}
+                  onClick={() => setFlippedCards(prev => {
+                    const next = new Set(prev)
+                    if (next.has(card.id)) next.delete(card.id)
+                    else next.add(card.id)
+                    return next
+                  })}
+                  style={{
+                    background: isFlipped ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff',
+                    borderRadius: 20, overflow: 'hidden',
+                    border: `1.5px solid ${isFlipped ? palette.main : '#E2E8F0'}`,
+                    cursor: 'pointer', transition: 'all .3s',
+                    boxShadow: isFlipped ? `0 8px 24px ${palette.glow}` : 'none',
+                    minHeight: 200,
+                  }}
+                >
+                  {!isFlipped ? (
+                    <>
+                      {imgUrl && (
+                        <div style={{ height: 140, overflow: 'hidden', position: 'relative' }}>
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(255,255,255,.9) 100%)' }} />
+                        </div>
+                      )}
+                      <div style={{ padding: '14px 16px' }}>
+                        <span style={{ background: '#DBEAFE', color: '#3B52D4', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{card.subject}</span>
+                        <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 8, lineHeight: 1.5 }}>{card.question}</p>
+                        <p style={{ color: '#94A3B8', fontSize: 11, marginTop: 8 }}>Appuie pour voir la réponse 👆</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 200 }}>
+                      <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>{t.back}</p>
+                      <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.7, fontWeight: 500 }}>{card.answer}</p>
+                      <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 11, marginTop: 16 }}>Appuie pour cacher 👆</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // ── CHAT SCREEN ───────────────────────────────────────────────────
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)' }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-
-          <button
-            onClick={() => { setPhase('setup'); setMessages([]) }}
-            style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}
-          >
-            ←
-          </button>
-
+          <button onClick={() => { setPhase('setup'); setMessages([]) }} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>←</button>
           <div style={{ animation: 'float 3s ease-in-out infinite', flexShrink: 0 }}>
-            <PalSVG
-              creature={child.pal?.creature || 'land'}
-              shape={child.pal?.bodyShape || 'round'}
-              palette={palette}
-              feature={child.pal?.feature || 'eyes'}
-              size={38}
-            />
+            <PalSVG creature={creature} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={38} />
           </div>
-
           <div style={{ flex: 1 }}>
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-fredoka)' }}>{palName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
-              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
-                {subject} · {pomodoroOn ? 'Pomodoro' : 'Session libre'}
-              </span>
+              <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{subject} · {pomodoroOn ? 'Pomodoro' : 'Session libre'}</span>
             </div>
           </div>
 
-          {/* Pomodoro timer — only shows after first message */}
-          {sessionStart && pomodoroOn && (
+          {/* Pomodoro timer — always visible when pomodoroOn */}
+          {pomodoroOn && (
             <div style={{
               background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)',
               border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`,
@@ -388,100 +464,81 @@ export default function AskPage() {
             </div>
           )}
 
-          {/* Music toggle */}
-          <button
-            onClick={() => setShowMusic(m => !m)}
-            style={{
-              background: showMusic ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.08)',
-              border: `1px solid ${showMusic ? '#22C55E' : 'rgba(255,255,255,.1)'}`,
-              borderRadius: 10, padding: '7px 10px', cursor: 'pointer',
-              fontSize: 16, color: showMusic ? '#22C55E' : 'rgba(255,255,255,.5)',
-              flexShrink: 0,
-            }}
-          >
-            🎵
-          </button>
+          <button onClick={() => setShowMusic(m => !m)} style={{ background: showMusic ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.08)', border: `1px solid ${showMusic ? '#22C55E' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '7px 10px', cursor: 'pointer', fontSize: 16, color: showMusic ? '#22C55E' : 'rgba(255,255,255,.5)', flexShrink: 0 }}>🎵</button>
         </div>
 
-        {/* Music iframe */}
         {showMusic && (
           <div style={{ marginTop: 10 }}>
-            <iframe
-              src={MUSIC[personality]?.url}
-              width="100%"
-              height="60"
-              style={{ borderRadius: 10, border: 'none' }}
-              allow="autoplay"
-            />
+            <iframe src={MUSIC[personality]?.url} width="100%" height="60" style={{ borderRadius: 10, border: 'none' }} allow="autoplay" />
           </div>
         )}
       </div>
 
       {/* Session done banner */}
       {sessionDone && (
-        <div style={{
-          background: ptsEarned > 0 ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : '#FEF3C7',
-          padding: '14px 20px', display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', flexShrink: 0,
-        }}>
+        <div style={{ background: ptsEarned > 0 ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : '#FEF3C7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <p style={{ fontWeight: 700, color: ptsEarned > 0 ? '#065F46' : '#92400E', fontSize: 14 }}>
             {ptsEarned > 0
               ? `${t.sessionSaved}${ptsEarned} ${t.points}`
               : '⏱️ Complète 25 min pour gagner des points la prochaine fois!'
             }
           </p>
-          <button
-            onClick={() => { setPhase('setup'); setMessages([]); setSessionDone(false) }}
-            style={{ background: ptsEarned > 0 ? '#065F46' : '#92400E', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}
-          >
+          <button onClick={() => { setPhase('setup'); setMessages([]); setSessionDone(false) }} style={{ background: ptsEarned > 0 ? '#065F46' : '#92400E', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}>
             Nouvelle session
           </button>
         </div>
       )}
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {messages.map((msg, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
             {msg.role === 'assistant' && (
               <div style={{ flexShrink: 0, marginBottom: 2 }}>
-                <PalSVG
-                  creature={child.pal?.creature || 'land'}
-                  shape={child.pal?.bodyShape || 'round'}
-                  palette={palette}
-                  feature={child.pal?.feature || 'eyes'}
-                  size={28}
-                />
+                <PalSVG creature={creature} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={28} />
               </div>
             )}
-            <div style={{
-              maxWidth: '78%', padding: '11px 15px', borderRadius: 18,
-              borderBottomLeftRadius:  msg.role === 'assistant' ? 4 : 18,
-              borderBottomRightRadius: msg.role === 'user'      ? 4 : 18,
-              background: msg.role === 'assistant' ? 'rgba(59,82,212,.3)' : '#FBBF24',
-              border:     msg.role === 'assistant' ? '1px solid rgba(59,82,212,.3)' : 'none',
-              color:      msg.role === 'assistant' ? 'rgba(255,255,255,.9)' : '#0B1F4B',
-              fontSize: 14, lineHeight: 1.6,
-              fontWeight: msg.role === 'user' ? 600 : 400,
-            }}>
-              {renderMarkdown(msg.content)}
-            </div>
+            {msg.role === 'assistant' ? (
+              <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {msg.imageUrl && (
+                  <div style={{ borderRadius: '16px 16px 4px 16px', overflow: 'hidden', border: `2px solid ${palette.main}33` }}>
+                    <img src={msg.imageUrl} alt="" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }}
+                      onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }} />
+                  </div>
+                )}
+                <div style={{ padding: '11px 15px', borderRadius: '16px 16px 16px 4px', background: 'rgba(59,82,212,.3)', border: '1px solid rgba(59,82,212,.3)', color: 'rgba(255,255,255,.9)', fontSize: 14, lineHeight: 1.6 }}>
+                  {renderMarkdown(msg.content)}
+                </div>
+                {i > 0 && msg.shortAnswer && (
+                  <button onClick={() => saveFlashcard(i)} disabled={msg.savedAsFlashcard || savedIds.has(i)} style={{
+                    alignSelf: 'flex-start',
+                    background: msg.savedAsFlashcard || savedIds.has(i) ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.07)',
+                    border: `1px solid ${msg.savedAsFlashcard || savedIds.has(i) ? '#22C55E' : 'rgba(255,255,255,.15)'}`,
+                    borderRadius: 99, padding: '4px 12px',
+                    color: msg.savedAsFlashcard || savedIds.has(i) ? '#22C55E' : 'rgba(255,255,255,.45)',
+                    fontSize: 11, fontWeight: 700,
+                    cursor: msg.savedAsFlashcard || savedIds.has(i) ? 'default' : 'pointer',
+                    fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
+                  }}>
+                    {msg.savedAsFlashcard || savedIds.has(i) ? t.flashcardSaved : `🗂️ ${t.saveFlashcard}`}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div style={{ maxWidth: '78%', padding: '11px 15px', borderRadius: '16px 16px 4px 16px', background: '#FBBF24', color: '#0B1F4B', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
+                {msg.content}
+              </div>
+            )}
           </div>
         ))}
 
         {loading && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
             <div style={{ flexShrink: 0 }}>
-              <PalSVG
-                creature={child.pal?.creature || 'land'}
-                shape={child.pal?.bodyShape || 'round'}
-                palette={palette}
-                feature={child.pal?.feature || 'eyes'}
-                size={28}
-              />
+              <PalSVG creature={creature} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={28} />
             </div>
-            <div style={{ background: 'rgba(59,82,212,.3)', border: '1px solid rgba(59,82,212,.3)', borderRadius: '18px 18px 18px 4px', padding: '12px 16px', display: 'flex', gap: 5 }}>
-              {[0, 1, 2].map(n => (
+            <div style={{ background: 'rgba(59,82,212,.3)', border: '1px solid rgba(59,82,212,.3)', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', display: 'flex', gap: 5 }}>
+              {[0,1,2].map(n => (
                 <div key={n} style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,.4)', animation: `typing 1.2s ${n * .2}s infinite` }} />
               ))}
             </div>
@@ -490,7 +547,7 @@ export default function AskPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input bar */}
+      {/* Input + end session bar */}
       <div style={{ padding: '10px 14px 20px', background: '#0B1F4B', borderTop: '1px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
         {!sessionDone && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
@@ -499,67 +556,54 @@ export default function AskPage() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder={t.typeMessage}
-              style={{
-                flex: 1, background: 'rgba(255,255,255,.08)',
-                border: '1px solid rgba(255,255,255,.1)',
-                borderRadius: 16, padding: '12px 16px',
-                color: '#fff', fontSize: 14,
-                fontFamily: 'var(--font-jakarta)', outline: 'none',
-              }}
+              style={{ flex: 1, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14, fontFamily: 'var(--font-jakarta)', outline: 'none' }}
             />
-            <button
-              onClick={sendMessage}
-              disabled={loading || !input.trim()}
-              style={{
-                width: 46, height: 46, borderRadius: 14, border: 'none',
-                background: input.trim() ? '#FBBF24' : 'rgba(255,255,255,.08)',
-                color: input.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)',
-                fontSize: 18, cursor: input.trim() ? 'pointer' : 'default',
-                flexShrink: 0, transition: 'all .2s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              ↑
-            </button>
+            <button onClick={sendMessage} disabled={loading || !input.trim()} style={{
+              width: 46, height: 46, borderRadius: 14, border: 'none',
+              background: input.trim() ? '#FBBF24' : 'rgba(255,255,255,.08)',
+              color: input.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)',
+              fontSize: 18, cursor: input.trim() ? 'pointer' : 'default',
+              flexShrink: 0, transition: 'all .2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>↑</button>
           </div>
         )}
 
+        {/* End session button */}
         <button
           onClick={endSession}
-          disabled={sessionDone || !sessionStart}
+          disabled={sessionDone}
           style={{
             width: '100%', padding: '11px',
-            background: sessionDone || !sessionStart
+            background: sessionDone
               ? 'rgba(255,255,255,.05)'
               : pomodoroOn && elapsed >= POMODORO
                 ? 'rgba(34,197,94,.15)'
                 : 'rgba(239,68,68,.15)',
-            color: sessionDone || !sessionStart
+            color: sessionDone
               ? 'rgba(255,255,255,.2)'
               : pomodoroOn && elapsed >= POMODORO
                 ? '#86EFAC'
                 : '#FCA5A5',
             border: `1px solid ${
-              sessionDone || !sessionStart
+              sessionDone
                 ? 'rgba(255,255,255,.05)'
                 : pomodoroOn && elapsed >= POMODORO
                   ? 'rgba(34,197,94,.2)'
                   : 'rgba(239,68,68,.2)'
             }`,
             borderRadius: 12, fontWeight: 700, fontSize: 13,
-            cursor: sessionDone || !sessionStart ? 'default' : 'pointer',
+            cursor: sessionDone ? 'default' : 'pointer',
             fontFamily: 'var(--font-jakarta)',
           }}
         >
-          {!sessionStart
-            ? 'Envoie un message pour démarrer le timer'
-            : sessionDone
-              ? 'Session terminée'
-              : pomodoroOn && elapsed >= POMODORO
-                ? `Terminer · +50 pts ⭐ · ${Math.floor(elapsed / 60)}min`
-                : pomodoroOn
-                  ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (25min = points)`
-                  : `${t.endSession} · ${Math.floor(elapsed / 60)}min`
+          {sessionDone
+            ? 'Session terminée'
+            : pomodoroOn && elapsed >= POMODORO
+              ? `Terminer · +50 pts ⭐ · ${Math.floor(elapsed / 60)}min`
+              : pomodoroOn
+                ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (25min = points)`
+                : `${t.endSession} · ${Math.floor(elapsed / 60)}min`
           }
         </button>
       </div>

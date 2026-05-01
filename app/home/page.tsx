@@ -299,11 +299,13 @@ useEffect(() => {
           <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 18, marginBottom: 14 }}>
             {t.exploration}
           </h3>
-          <div style={{ height: 6, background: 'rgba(255,255,255,.12)', borderRadius: 99, marginBottom: 10 }}>
-            <div style={{ height: '100%', width: '65%', background: '#FBBF24', borderRadius: 99 }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>65% {t.complete}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+            <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>
+              {sessions > 0
+                ? `${sessions} session${sessions > 1 ? 's' : ''} · ${streak} jour${streak > 1 ? 's' : ''} de suite`
+                : lang === 'fr' ? 'Commence ta première session!' : 'Kòmanse premye sesyon ou!'
+              }
+            </span>
             <div style={{ background: '#FBBF24', color: '#0B1F4B', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 800 }}>
               {t.continuer}
             </div>

@@ -755,15 +755,6 @@ export default function AskPage() {
           </div>
         )}
 
-        {/* Music */}
-        <div style={{ background: '#fff', borderRadius: 20, padding: '16px 18px', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🎵</div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14 }}>{t.musicLabel}</p>
-            <p style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>{MUSIC[personality]?.label} · adapté à {palName}</p>
-          </div>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
-        </div>
 
         {/* Flashcards button */}
         <button onClick={() => setPhase('flashcards')} style={{
@@ -889,14 +880,10 @@ export default function AskPage() {
             </div>
           )}
 
-          <button onClick={() => setShowMusic(m => !m)} style={{ background: showMusic ? 'rgba(34,197,94,.2)' : 'rgba(255,255,255,.08)', border: `1px solid ${showMusic ? '#22C55E' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '7px 10px', cursor: 'pointer', fontSize: 16, color: showMusic ? '#22C55E' : 'rgba(255,255,255,.5)', flexShrink: 0 }}>🎵</button>
-        </div>
+         </div>
 
-        {showMusic && (
-          <div style={{ marginTop: 10 }}>
-            <iframe src={MUSIC[personality]?.url} width="100%" height="60" style={{ borderRadius: 10, border: 'none' }} allow="autoplay" />
-          </div>
-        )}
+
+      
       </div>
 
       {/* Session done banner */}

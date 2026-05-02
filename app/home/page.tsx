@@ -101,11 +101,21 @@ useEffect(() => {
     .then(({ count }: any) => { if (count) setSessions(count) })
 
   // Next mentor
-  supabase.from('mentor_sessions')
-    .select('*, mentors(name, field)')
-    .eq('child_id', child.id).eq('status', 'upcoming')
-    .order('scheduled_at', { ascending: true }).limit(1).maybeSingle()
-    .then(({ data }: any) => { if (data) setNextMentor(data) })
+  supabase
+    .from('mentors')
+    .select('id, name, field, avatar_emoji')
+    .limit(1)
+    .maybeSingle()
+    .then(async ({ data }: any) => {
+      if (!data) return
+      const { count } = await supabase
+        .from('mentor_episodes')
+        .select('id', { count: 'exact' })
+        .eq('mentor_id', data.id)
+        .eq('published', true)
+      setNextMentor({ ...data, episode_count: count || 0 })
+    })
+
 
   // Articles
   supabase.from('news_articles')
@@ -366,27 +376,33 @@ useEffect(() => {
         <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#0B1F4B', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>
           {t.prochainMentor}
         </h2>
-        {nextMentor ? (
+              {nextMentor ? (
           <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F0F9FF)', borderRadius: 20, padding: '18px', border: '1.5px solid #BFDBFE', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>🌟</div>
+            <div style={{ width: 54, height: 54, borderRadius: 16, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>
+              {nextMentor.avatar_emoji || '🎬'}
+            </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{nextMentor.mentors?.name}</p>
-              <p style={{ color: '#3B52D4', fontSize: 13, fontWeight: 600 }}>{nextMentor.mentors?.field}</p>
+              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15 }}>{nextMentor.name}</p>
+              <p style={{ color: '#3B52D4', fontSize: 13, fontWeight: 600 }}>{nextMentor.field}</p>
               <p style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>
-                {new Date(nextMentor.scheduled_at).toLocaleString(lang === 'fr' ? 'fr-CA' : 'fr-CA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                {nextMentor.episode_count || 0} épisode{(nextMentor.episode_count || 0) > 1 ? 's' : ''} disponible{(nextMentor.episode_count || 0) > 1 ? 's' : ''}
               </p>
             </div>
-            <div style={{ background: '#3B52D4', color: '#fff', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-              {t.rejoindre}
+            <div
+              onClick={() => router.push('/home/mentors')}
+              style={{ background: '#3B52D4', color: '#fff', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              ▶ Regarder
             </div>
           </div>
         ) : (
           <div style={{ background: '#fff', borderRadius: 20, padding: 28, border: '1.5px dashed #E2E8F0', textAlign: 'center' }}>
-            <p style={{ fontSize: 36, marginBottom: 10 }}>🔮</p>
+            <p style={{ fontSize: 36, marginBottom: 10 }}>🎬</p>
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 4 }}>{t.aucuneMentor}</p>
             <p style={{ color: '#94A3B8', fontSize: 13 }}>{t.aucuneMentorSub}</p>
           </div>
         )}
+
       </div>
     </div>
   )

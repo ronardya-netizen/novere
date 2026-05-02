@@ -3,7 +3,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useChild } from '@/lib/ChildContext'
 import { useState, useEffect, createContext, useContext } from 'react'
 
-// Language context
 const LangContext = createContext<{ lang: 'fr' | 'cr'; setLang: (l: 'fr' | 'cr') => void }>({ lang: 'fr', setLang: () => {} })
 export const useLang = () => useContext(LangContext)
 
@@ -19,16 +18,15 @@ const PALETTES: Record<string, { main: string; accent: string }> = {
 }
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
-  const pathname  = useRouter()
-  const path      = usePathname()
-  const router    = useRouter()
+  const path   = usePathname()
+  const router = useRouter()
   const { child } = useChild()
   const [lang, setLang]       = useState<'fr' | 'cr'>('fr')
   const [isMobile, setIsMobile] = useState(true)
 
-  const palName  = child?.pal?.name || '...'
-  const palId    = child?.pal?.palette || 'ocean'
-  const palette  = PALETTES[palId] || PALETTES.ocean
+  const palName = child?.pal?.name || '...'
+  const palId   = child?.pal?.palette || 'ocean'
+  const palette = PALETTES[palId] || PALETTES.ocean
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -38,13 +36,14 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
   }, [])
 
   const tabs = [
-    { id: 'home',    path: '/home',        labelFr: 'Accueil',  labelCr: 'Akèy',    icon: HomeIcon    },
-    { id: 'ask',     path: '/home/ask',    labelFr: palName,    labelCr: palName,   icon: PalIcon     },
-    { id: 'quests',  path: '/home/quests', labelFr: 'Quêtes',   labelCr: 'Kèt',     icon: QuestIcon   },
-    { id: 'profile', path: '/home/profile',labelFr: 'Profil',   labelCr: 'Pwofil',  icon: ProfileIcon },
+    { id: 'home',    path: '/home',          labelFr: 'Accueil',  labelCr: 'Akèy',   icon: HomeIcon    },
+    { id: 'ask',     path: '/home/ask',       labelFr: palName,    labelCr: palName,  icon: PalIcon     },
+    { id: 'mentors', path: '/home/mentors',   labelFr: 'Mentors',  labelCr: 'Mentor', icon: MentorIcon  },
+    { id: 'quests',  path: '/home/quests',    labelFr: 'Quêtes',   labelCr: 'Kèt',    icon: QuestIcon   },
+    { id: 'profile', path: '/home/profile',   labelFr: 'Profil',   labelCr: 'Pwofil', icon: ProfileIcon },
   ]
 
-  const active = tabs.find(t => path === t.path)?.id || 'home'
+  const active = tabs.find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
 
   return (
     <LangContext.Provider value={{ lang, setLang }}>
@@ -57,13 +56,11 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
             padding: '28px 16px', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 100,
             borderRight: '1px solid rgba(255,255,255,.07)',
           }}>
-            {/* Logo */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40, paddingLeft: 8 }}>
               <img src="/novere_logo.png" alt="NOVERE" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <span style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: 1.5 }}>NOVERE</span>
             </div>
 
-            {/* Nav items */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
               {tabs.map(t => {
                 const isActive = active === t.id
@@ -86,7 +83,6 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
               })}
             </div>
 
-            {/* Language toggle */}
             <div style={{ display: 'flex', background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: 4, gap: 4 }}>
               {(['fr', 'cr'] as const).map(l => (
                 <button key={l} onClick={() => setLang(l)} style={{
@@ -103,7 +99,6 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
-        {/* MAIN CONTENT */}
         <div style={{
           flex: 1,
           marginLeft: isMobile ? 0 : 240,
@@ -119,7 +114,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0,
             background: '#fff', borderTop: '1px solid #E8EEF9',
-            display: 'flex', padding: '8px 4px 16px', zIndex: 100,
+            display: 'flex', padding: '8px 0 16px', zIndex: 100,
             boxShadow: '0 -4px 20px rgba(0,0,0,.06)',
           }}>
             {tabs.map(t => {
@@ -130,22 +125,21 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
                   background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px',
                 }}>
                   <div style={{
-                    width: 42, height: 42, borderRadius: 14,
+                    width: 38, height: 38, borderRadius: 12,
                     background: isActive ? '#0B1F4B' : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all .2s',
                   }}>
                     <t.icon color={isActive ? '#FBBF24' : '#94A3B8'} />
                   </div>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: isActive ? '#0B1F4B' : '#94A3B8', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isActive ? '#0B1F4B' : '#94A3B8', maxWidth: 54, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {lang === 'fr' ? t.labelFr : t.labelCr}
                   </span>
                 </button>
               )
             })}
 
-            {/* Mobile lang toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', paddingRight: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', paddingRight: 6 }}>
               <button onClick={() => setLang(lang === 'fr' ? 'cr' : 'fr')} style={{
                 background: '#F1F5F9', border: 'none', borderRadius: 10,
                 padding: '6px 10px', fontSize: 11, fontWeight: 700,
@@ -175,6 +169,15 @@ function PalIcon({ color }: { color: string }) {
       <circle cx="9"  cy="11" r="1.5" fill={color} />
       <circle cx="15" cy="11" r="1.5" fill={color} />
       <path d="M9 15C9 15 10.5 17 12 17C13.5 17 15 15 15 15" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+function MentorIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="4" width="20" height="14" rx="3" stroke={color} strokeWidth="1.8" fill="none" />
+      <path d="M10 9L15 12L10 15V9Z" fill={color} />
+      <path d="M8 20L12 18L16 20" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }

@@ -5,30 +5,33 @@ import { useRouter } from 'next/navigation'
 
 export default function AuthPage() {
   const router = useRouter()
-  const [mode, setMode]         = useState<'login' | 'signup'>('login')
+  const [mode, setMode]         = useState<'login' | 'signup'>('signup')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName]         = useState('')
-  const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
 
-  const handleSubmit = async () => {
-    setLoading(true)
+  const handle = async () => {
     setError('')
+    setLoading(true)
 
     if (mode === 'signup') {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name } }
+        options: {
+          emailRedirectTo: 'https://novere.vercel.app/onboarding',
+        },
       })
       if (error) { setError(error.message); setLoading(false); return }
-      router.push('/onboarding')
+      // Always go to verify page after signup
+      router.push('/verify')
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError(error.message); setLoading(false); return }
       router.push('/home')
     }
+
     setLoading(false)
   }
 
@@ -39,109 +42,85 @@ export default function AuthPage() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24, fontFamily: 'var(--font-jakarta)',
     }}>
-      {/* Glow blobs */}
-      <div style={{ position:'fixed', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(37,99,235,.2) 0%, transparent 70%)', top:'10%', right:'5%', pointerEvents:'none' }} />
-      <div style={{ position:'fixed', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(251,191,36,.1) 0%, transparent 70%)', bottom:'15%', left:'8%', pointerEvents:'none' }} />
+      <div style={{ width: '100%', maxWidth: 400 }}>
 
-      <div style={{ width:'100%', maxWidth:420 }}>
         {/* Logo */}
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
-          <img
-            src="/novere_logo.png"
-            alt="NOVERE"
-            style={{ width:100, height:100, objectFit:'contain', marginBottom:16 }}
-          />
-          <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#FFFFFF', fontSize:32, fontWeight:700, letterSpacing:2 }}>
-            NOVERE
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <img src="/novere_logo.png" alt="NOVERE" style={{ width: 72, height: 72, objectFit: 'contain', marginBottom: 16 }} />
+          <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
+            NOVÈRE
           </h1>
-          <p style={{ color:'rgba(255,255,255,.35)', fontSize:14, marginTop:4 }}>
-            Nouvel Héritage
+          <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>
+            {mode === 'signup' ? 'Crée ton compte parent' : 'Bienvenue de retour'}
           </p>
         </div>
 
-        {/* Card */}
-        <div style={{
-          background:'rgba(255,255,255,.05)',
-          border:'1px solid rgba(255,255,255,.1)',
-          borderRadius:28, padding:32,
-          backdropFilter:'blur(20px)',
-        }}>
-          {/* Toggle */}
-          <div style={{ display:'flex', background:'rgba(255,255,255,.06)', borderRadius:14, padding:4, marginBottom:28 }}>
-            {(['login','signup'] as const).map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                flex:1, padding:'10px 0', borderRadius:11, border:'none',
-                background: mode === m ? '#FBBF24' : 'transparent',
-                color: mode === m ? '#0B1F4B' : 'rgba(255,255,255,.45)',
-                fontWeight:700, fontSize:14, cursor:'pointer',
-                transition:'all .2s', fontFamily:'var(--font-jakarta)',
-              }}>
-                {m === 'login' ? 'Connexion' : 'Créer un compte'}
-              </button>
-            ))}
-          </div>
+        {/* Mode toggle */}
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,.06)', borderRadius: 14, padding: 4, marginBottom: 24 }}>
+          {(['signup', 'login'] as const).map(m => (
+            <button key={m} onClick={() => { setMode(m); setError('') }} style={{
+              flex: 1, padding: '10px', borderRadius: 10, border: 'none',
+              background: mode === m ? '#FBBF24' : 'transparent',
+              color: mode === m ? '#0B1F4B' : 'rgba(255,255,255,.4)',
+              fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
+            }}>
+              {m === 'signup' ? 'Créer un compte' : 'Se connecter'}
+            </button>
+          ))}
+        </div>
 
-          {/* Fields */}
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-            {mode === 'signup' && (
-              <input
-                placeholder="Votre nom complet"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                style={inputStyle}
-              />
-            )}
+        {/* Form */}
+        <div style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 24, padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.05)', borderRadius: 14, padding: '12px 16px', border: '1px solid rgba(255,255,255,.08)' }}>
+            <span style={{ fontSize: 18 }}>📧</span>
             <input
-              placeholder="Adresse courriel"
               type="email"
+              placeholder="Adresse courriel"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              style={inputStyle}
+              style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: 15, fontFamily: 'var(--font-jakarta)', outline: 'none' }}
             />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.05)', borderRadius: 14, padding: '12px 16px', border: '1px solid rgba(255,255,255,.08)' }}>
+            <span style={{ fontSize: 18 }}>🔒</span>
             <input
-              placeholder="Mot de passe"
               type="password"
+              placeholder="Mot de passe"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              style={inputStyle}
+              onKeyDown={e => e.key === 'Enter' && handle()}
+              style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: 15, fontFamily: 'var(--font-jakarta)', outline: 'none' }}
             />
           </div>
 
           {error && (
-            <p style={{ color:'#FCA5A5', fontSize:13, marginTop:12, textAlign:'center' }}>{error}</p>
+            <div style={{ background: 'rgba(239,68,68,.15)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 12, padding: '10px 14px' }}>
+              <p style={{ color: '#FCA5A5', fontSize: 13, fontWeight: 600 }}>{error}</p>
+            </div>
           )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              width:'100%', marginTop:22, padding:'14px',
-              background: loading ? 'rgba(251,191,36,.5)' : '#FBBF24',
-              color:'#0B1F4B', border:'none', borderRadius:14,
-              fontWeight:800, fontSize:16,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily:'var(--font-jakarta)', transition:'all .2s',
-            }}
-          >
-            {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter →' : 'Créer mon compte →'}
+          <button onClick={handle} disabled={loading || !email || !password} style={{
+            width: '100%', padding: '14px',
+            background: email && password ? '#FBBF24' : 'rgba(255,255,255,.1)',
+            color: email && password ? '#0B1F4B' : 'rgba(255,255,255,.3)',
+            border: 'none', borderRadius: 14, fontWeight: 800, fontSize: 15,
+            cursor: email && password ? 'pointer' : 'default',
+            fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
+          }}>
+            {loading ? 'Chargement...' : mode === 'signup' ? 'Créer mon compte →' : 'Se connecter →'}
           </button>
 
-          <p style={{ color:'rgba(255,255,255,.25)', fontSize:12, textAlign:'center', marginTop:20, lineHeight:1.6 }}>
-            Une partie de chaque abonnement aide des enfants en Haiti 🇭🇹
-          </p>
+          {mode === 'signup' && (
+            <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 12, textAlign: 'center', lineHeight: 1.6 }}>
+              En créant un compte, vous acceptez nos conditions d'utilisation. Un courriel de vérification sera envoyé.
+            </p>
+          )}
         </div>
       </div>
     </div>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  width:'100%', padding:'13px 16px',
-  background:'rgba(255,255,255,.07)',
-  border:'1px solid rgba(255,255,255,.1)',
-  borderRadius:12, color:'#fff', fontSize:14,
-  fontFamily:'var(--font-jakarta)',
-  outline:'none',
 }
 

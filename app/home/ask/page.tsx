@@ -4,6 +4,7 @@ import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from '../layout'
+import { getTopicsForGrade, type Topic } from '@/lib/curriculum'
 
 const PALETTES: Record<string, any> = {
   ocean:   { main: '#3B52D4', accent: '#7DD3FC', glow: 'rgba(59,82,212,.4)'   },
@@ -16,11 +17,11 @@ const PALETTES: Record<string, any> = {
   night:   { main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
 }
 
-const CREATURE_THEMES: Record<string, { world: string; obstacles: string[]; bg: string; ground: string; emoji: string }> = {
-  land:   { world: 'Forêt',     obstacles: ['🪨','🌲','🍄'], bg: '#1a3a1a', ground: '#2d5a1b', emoji: '🐾' },
-  sea:    { world: 'Océan',     obstacles: ['🪼','🦈','🐚'], bg: '#0a1628', ground: '#1a4a6b', emoji: '🌊' },
-  sky:    { world: 'Ciel',      obstacles: ['⛅','⚡','🌪️'], bg: '#1a2a4a', ground: '#4a7ab5', emoji: '🕊️' },
-  cosmic: { world: 'Cosmos',    obstacles: ['☄️','🌑','💫'], bg: '#0a0a1a', ground: '#1a0a3a', emoji: '✨' },
+const CREATURE_THEMES: Record<string, { world: string; obstacles: string[]; bg: string; ground: string }> = {
+  land:   { world: 'Forêt',  obstacles: ['🪨','🌲','🍄'], bg: '#1a3a1a', ground: '#2d5a1b' },
+  sea:    { world: 'Océan',  obstacles: ['🪼','🦈','🐚'], bg: '#0a1628', ground: '#1a4a6b' },
+  sky:    { world: 'Ciel',   obstacles: ['⛅','⚡','🌪️'], bg: '#1a2a4a', ground: '#4a7ab5' },
+  cosmic: { world: 'Cosmos', obstacles: ['☄️','🌑','💫'], bg: '#0a0a1a', ground: '#1a0a3a' },
 }
 
 const SUBJECTS = [
@@ -42,7 +43,10 @@ const MUSIC: Record<string, { url: string; label: string }> = {
 const T = {
   fr: {
     title: 'Demande à', subtitle: 'Choisis une matière et commence',
-    subject: 'Matière', startSession: 'Commencer la session →',
+    subject: 'Matière', topic: 'Sujet spécifique',
+    topicOptional: '(optionnel)', topicHint: 'Choisis le chapitre sur lequel tu travailles.',
+    topicGeneral: 'Général',
+    startSession: 'Commencer la session →',
     typeMessage: 'Pose ta question...',
     endSession: 'Terminer la session',
     sessionSaved: 'Session sauvegardée! +', points: 'pts ⭐',
@@ -59,7 +63,10 @@ const T = {
   },
   cr: {
     title: 'Mande', subtitle: 'Chwazi yon sijè epi kòmanse',
-    subject: 'Sijè', startSession: 'Kòmanse sesyon →',
+    subject: 'Sijè', topic: 'Sijè espesifik',
+    topicOptional: '(opsyonèl)', topicHint: 'Chwazi chapit ou ap travay sou li.',
+    topicGeneral: 'Jeneral',
+    startSession: 'Kòmanse sesyon →',
     typeMessage: 'Poze kesyon ou...',
     endSession: 'Fini sesyon',
     sessionSaved: 'Sesyon sove! +', points: 'pwen ⭐',
@@ -76,9 +83,9 @@ const T = {
   }
 }
 
-const POMODORO    = 25 * 60
-const BREAK_TIME  = 5  * 60
-const GAME_TYPES  = ['memory', 'dodge', 'tap', 'breathe'] as const
+const POMODORO   = 25 * 60
+const BREAK_TIME = 5  * 60
+const GAME_TYPES = ['memory', 'dodge', 'tap', 'breathe'] as const
 type GameType = typeof GAME_TYPES[number]
 
 type Message = {
@@ -105,12 +112,12 @@ function buildImageUrl(prompt: string): string {
   return `https://image.pollinations.ai/prompt/${encoded}?width=400&height=300&nologo=true`
 }
 
-// ── MEMORY GAME ───────────────────────────────────────────────────
+// ── MEMORY GAME ──────────────────────────────────────────────────
 function MemoryGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
   const baseEmojis = [...theme.obstacles, '⭐', '🎯', '🏆', '💎']
   const pairs = [...baseEmojis.slice(0, 6), ...baseEmojis.slice(0, 6)]
-  const [cards] = useState(() => pairs.map((e, i) => ({ id: i, emoji: e, matched: false })).sort(() => Math.random() - 0.5))
+  const [cards] = useState(() => pairs.map((e, i) => ({ id: i, emoji: e })).sort(() => Math.random() - 0.5))
   const [flipped, setFlipped]   = useState<number[]>([])
   const [matched, setMatched]   = useState<number[]>([])
   const [moves, setMoves]       = useState(0)
@@ -130,14 +137,10 @@ function MemoryGame({ creature, palette, palName, onComplete }: { creature: stri
           setMatched(newMatched)
           setFlipped([])
           if (newMatched.length === cards.length) onComplete(Math.max(100 - moves * 5, 10))
-        } else {
-          setFlipped([])
-        }
+        } else setFlipped([])
         setChecking(false)
       }, 800)
-    } else {
-      setFlipped([id])
-    }
+    } else setFlipped([id])
   }
 
   return (
@@ -166,14 +169,14 @@ function MemoryGame({ creature, palette, palName, onComplete }: { creature: stri
   )
 }
 
-// ── DODGE GAME ────────────────────────────────────────────────────
+// ── DODGE GAME ───────────────────────────────────────────────────
 function DodgeGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
-  const theme     = CREATURE_THEMES[creature] || CREATURE_THEMES.land
-  const [palY, setPalY]         = useState(60)
+  const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
+  const [palY, setPalY]           = useState(60)
   const [obstacles, setObstacles] = useState<{ x: number; emoji: string; id: number }[]>([])
-  const [score, setScore]       = useState(0)
-  const [alive, setAlive]       = useState(true)
-  const [started, setStarted]   = useState(false)
+  const [score, setScore]         = useState(0)
+  const [alive, setAlive]         = useState(true)
+  const [started, setStarted]     = useState(false)
   const frameRef  = useRef<any>(null)
   const obsRef    = useRef(obstacles)
   const palYRef   = useRef(palY)
@@ -207,7 +210,6 @@ function DodgeGame({ creature, palette, palName, onComplete }: { creature: strin
     frameRef.current = setInterval(() => {
       setObstacles(prev => {
         const updated = prev.map(o => ({ ...o, x: o.x - 3 })).filter(o => o.x > -10)
-        // Collision detection — pal is at x=8-18, y=palYRef.current to +20
         for (const obs of updated) {
           if (obs.x < 18 && obs.x > 5 && palYRef.current > 45) {
             setAlive(false)
@@ -229,31 +231,18 @@ function DodgeGame({ creature, palette, palName, onComplete }: { creature: strin
       <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 8 }}>
         {!started ? 'Appuie pour commencer!' : `Score: ${score}`}
       </p>
-      <div
-        onClick={jump}
-        style={{
-          width: '100%', maxWidth: 360, height: 120, margin: '0 auto',
-          background: theme.bg, borderRadius: 16, position: 'relative',
-          overflow: 'hidden', cursor: 'pointer',
-          border: `2px solid ${palette.main}`,
-        }}
-      >
-        {/* Ground */}
+      <div onClick={jump} style={{
+        width: '100%', maxWidth: 360, height: 120, margin: '0 auto',
+        background: theme.bg, borderRadius: 16, position: 'relative',
+        overflow: 'hidden', cursor: 'pointer', border: `2px solid ${palette.main}`,
+      }}>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 28, background: theme.ground, borderRadius: '0 0 14px 14px' }} />
-
-        {/* Pal */}
-        <div style={{ position: 'absolute', left: '8%', bottom: `${100 - palY}%`, fontSize: 28, transition: 'bottom .15s ease' }}>
+        <div style={{ position: 'absolute', left: '8%', fontSize: 28, transition: 'bottom .15s ease', bottom: `${100 - palY}%` }}>
           {alive ? '🙂' : '😵'}
         </div>
-
-        {/* Obstacles */}
         {obstacles.map(obs => (
-          <div key={obs.id} style={{ position: 'absolute', bottom: 24, left: `${obs.x}%`, fontSize: 24 }}>
-            {obs.emoji}
-          </div>
+          <div key={obs.id} style={{ position: 'absolute', bottom: 24, left: `${obs.x}%`, fontSize: 24 }}>{obs.emoji}</div>
         ))}
-
-        {/* Not started overlay */}
         {!started && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', borderRadius: 14 }}>
             <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 16 }}>Appuie / Espace pour sauter!</p>
@@ -267,7 +256,7 @@ function DodgeGame({ creature, palette, palName, onComplete }: { creature: strin
   )
 }
 
-// ── TAP GAME ──────────────────────────────────────────────────────
+// ── TAP GAME ─────────────────────────────────────────────────────
 function TapGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
   const [targets, setTargets]   = useState<{ id: number; x: number; y: number; emoji: string }[]>([])
@@ -275,6 +264,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
   const [timeLeft, setTimeLeft] = useState(30)
   const [started, setStarted]   = useState(false)
   const doneRef = useRef(false)
+  const scoreRef = useRef(0)
 
   useEffect(() => {
     if (!started) return
@@ -282,7 +272,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
       setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(timer)
-          if (!doneRef.current) { doneRef.current = true; setTimeout(() => onComplete(score), 500) }
+          if (!doneRef.current) { doneRef.current = true; setTimeout(() => onComplete(scoreRef.current), 500) }
           return 0
         }
         return t - 1
@@ -295,9 +285,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
     if (!started || timeLeft === 0) return
     const spawn = setInterval(() => {
       setTargets(prev => [...prev.slice(-6), {
-        id: Date.now(),
-        x: 5 + Math.random() * 80,
-        y: 10 + Math.random() * 70,
+        id: Date.now(), x: 5 + Math.random() * 80, y: 10 + Math.random() * 70,
         emoji: theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)],
       }])
     }, 800)
@@ -306,6 +294,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
 
   const hit = (id: number) => {
     setTargets(prev => prev.filter(t => t.id !== id))
+    scoreRef.current += 10
     setScore(s => s + 10)
   }
 
@@ -315,15 +304,12 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
         <p style={{ color: '#FBBF24', fontWeight: 700, fontSize: 14 }}>Score: {score}</p>
         <p style={{ color: timeLeft <= 10 ? '#EF4444' : 'rgba(255,255,255,.6)', fontWeight: 700, fontSize: 14 }}>{timeLeft}s</p>
       </div>
-      <div
-        onClick={() => !started && setStarted(true)}
-        style={{
-          width: '100%', maxWidth: 360, height: 200, margin: '0 auto',
-          background: theme.bg, borderRadius: 16, position: 'relative',
-          overflow: 'hidden', cursor: started ? 'default' : 'pointer',
-          border: `2px solid ${palette.main}`,
-        }}
-      >
+      <div onClick={() => !started && setStarted(true)} style={{
+        width: '100%', maxWidth: 360, height: 200, margin: '0 auto',
+        background: theme.bg, borderRadius: 16, position: 'relative',
+        overflow: 'hidden', cursor: started ? 'default' : 'pointer',
+        border: `2px solid ${palette.main}`,
+      }}>
         {!started ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 16 }}>Appuie pour commencer!</p>
@@ -333,18 +319,15 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
             <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 20 }}>Terminé! 🎉</p>
             <p style={{ color: '#fff', fontSize: 16 }}>Score: {score}</p>
           </div>
-        ) : (
-          targets.map(tgt => (
-            <div key={tgt.id} onClick={() => hit(tgt.id)} style={{
-              position: 'absolute', left: `${tgt.x}%`, top: `${tgt.y}%`,
-              fontSize: 28, cursor: 'pointer', userSelect: 'none',
-              animation: 'popIn .2s ease',
-              transform: 'translate(-50%, -50%)',
-            }}>
-              {tgt.emoji}
-            </div>
-          ))
-        )}
+        ) : targets.map(tgt => (
+          <div key={tgt.id} onClick={() => hit(tgt.id)} style={{
+            position: 'absolute', left: `${tgt.x}%`, top: `${tgt.y}%`,
+            fontSize: 28, cursor: 'pointer', userSelect: 'none',
+            transform: 'translate(-50%, -50%)',
+          }}>
+            {tgt.emoji}
+          </div>
+        ))}
       </div>
       <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, marginTop: 8 }}>
         Attrape les créatures du {theme.world} de {palName}!
@@ -353,29 +336,25 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
   )
 }
 
-// ── BREATHE GAME ──────────────────────────────────────────────────
-function BreatheGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
-  const [phase, setPhase]   = useState<'inhale' | 'hold' | 'exhale'>('inhale')
+// ── BREATHE GAME ─────────────────────────────────────────────────
+function BreatheGame({ palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
+  const [phase, setPhase]   = useState<'inhale'|'hold'|'exhale'>('inhale')
   const [count, setCount]   = useState(4)
   const [cycles, setCycles] = useState(0)
-  const TOTAL_CYCLES = 4
+  const TOTAL = 4
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCount(c => {
         if (c <= 1) {
           setPhase(p => {
-            if (p === 'inhale') { setCount(4); return 'hold'   }
-            if (p === 'hold'  ) { setCount(6); return 'exhale' }
+            if (p === 'inhale') { setCount(4); return 'hold' }
+            if (p === 'hold')   { setCount(6); return 'exhale' }
             setCycles(cy => {
-              if (cy + 1 >= TOTAL_CYCLES) {
-                clearInterval(timer)
-                setTimeout(() => onComplete(100), 500)
-              }
+              if (cy + 1 >= TOTAL) { clearInterval(timer); setTimeout(() => onComplete(100), 500) }
               return cy + 1
             })
-            setCount(4)
-            return 'inhale'
+            setCount(4); return 'inhale'
           })
           return c
         }
@@ -385,24 +364,22 @@ function BreatheGame({ creature, palette, palName, onComplete }: { creature: str
     return () => clearInterval(timer)
   }, [])
 
-  const size = phase === 'inhale' ? 120 : phase === 'hold' ? 120 : 60
+  const size  = phase === 'exhale' ? 60 : 120
   const label = phase === 'inhale' ? 'Inspire...' : phase === 'hold' ? 'Retiens...' : 'Expire...'
   const color = phase === 'inhale' ? palette.main : phase === 'hold' ? palette.accent : '#22C55E'
 
   return (
     <div style={{ textAlign: 'center', padding: '8px 0' }}>
       <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 20 }}>
-        {palName} t'accompagne pour te recentrer 🌬️ · {TOTAL_CYCLES - cycles} cycles restants
+        {palName} t'accompagne 🌬️ · {TOTAL - cycles} cycles restants
       </p>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
         <div style={{
-          width: size, height: size,
-          borderRadius: '50%',
+          width: size, height: size, borderRadius: '50%',
           background: `radial-gradient(circle, ${color}44, ${color}11)`,
           border: `3px solid ${color}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 1s ease',
-          boxShadow: `0 0 ${size/2}px ${color}44`,
+          transition: 'all 1s ease', boxShadow: `0 0 ${size/2}px ${color}44`,
         }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ color: '#fff', fontWeight: 800, fontSize: 28, fontFamily: 'var(--font-fredoka)' }}>{count}</p>
@@ -410,21 +387,19 @@ function BreatheGame({ creature, palette, palName, onComplete }: { creature: str
           </div>
         </div>
       </div>
-      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>
-        Inspire 4s · Retiens 4s · Expire 6s
-      </p>
+      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>Inspire 4s · Retiens 4s · Expire 6s</p>
     </div>
   )
 }
 
 // ── BREAK OVERLAY ─────────────────────────────────────────────────
-function BreakOverlay({ creature, palette, palName, personalityEmoji, lang, t, onFinish }: {
-  creature: string; palette: any; palName: string; personalityEmoji: string;
+function BreakOverlay({ creature, palette, palName, lang, t, onFinish }: {
+  creature: string; palette: any; palName: string;
   lang: 'fr'|'cr'; t: typeof T['fr']; onFinish: () => void
 }) {
-  const [game]          = useState<GameType>(() => GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)])
+  const [game]      = useState<GameType>(() => GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)])
   const [breakLeft, setBreakLeft] = useState(BREAK_TIME)
-  const [gameScore, setGameScore] = useState<number | null>(null)
+  const [gameScore, setGameScore] = useState<number|null>(null)
   const [gameDone, setGameDone]   = useState(false)
 
   useEffect(() => {
@@ -437,27 +412,20 @@ function BreakOverlay({ creature, palette, palName, personalityEmoji, lang, t, o
   const breakMins = String(Math.floor(breakLeft / 60)).padStart(2, '0')
   const breakSecs = String(breakLeft % 60).padStart(2, '0')
 
-  const handleGameComplete = (score: number) => {
-    setGameScore(score)
-    setGameDone(true)
+  const gameNames: Record<GameType, string> = {
+    memory: '🃏 Carte mémoire', dodge: '🚀 Évite les obstacles',
+    tap: '🎯 Clique vite', breathe: '🌬️ Respiration guidée',
   }
 
-  const gameNames: Record<GameType, string> = {
-    memory:  '🃏 Carte mémoire',
-    dodge:   '🚀 Évite les obstacles',
-    tap:     '🎯 Clique vite',
-    breathe: '🌬️ Respiration guidée',
-  }
+  const handleGameComplete = (score: number) => { setGameScore(score); setGameDone(true) }
 
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 200,
       background: `linear-gradient(160deg, #0B1F4B 0%, ${palette.main}33 100%)`,
-      display: 'flex', flexDirection: 'column',
-      fontFamily: 'var(--font-jakarta)',
+      display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-jakarta)',
       animation: 'slideUp .4s ease',
     }}>
-      {/* Header */}
       <div style={{ padding: '20px 20px 16px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,.08)', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ background: 'rgba(34,197,94,.2)', border: '1px solid #22C55E', borderRadius: 99, padding: '4px 14px' }}>
@@ -467,13 +435,10 @@ function BreakOverlay({ creature, palette, palName, personalityEmoji, lang, t, o
             <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13 }}>⏱ {breakMins}:{breakSecs}</span>
           </div>
         </div>
-        <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-          {t.breakTitle}
-        </h2>
+        <h2 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{t.breakTitle}</h2>
         <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>{gameNames[game]}</p>
       </div>
 
-      {/* Game area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px' }}>
         {!gameDone ? (
           <>
@@ -485,39 +450,25 @@ function BreakOverlay({ creature, palette, palName, personalityEmoji, lang, t, o
         ) : (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <p style={{ fontSize: 48, marginBottom: 12 }}>🎊</p>
-            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#FBBF24', fontSize: 28, marginBottom: 8 }}>
-              Bien joué!
-            </h3>
+            <h3 style={{ fontFamily: 'var(--font-fredoka)', color: '#FBBF24', fontSize: 28, marginBottom: 8 }}>Bien joué!</h3>
             <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 15, marginBottom: 4 }}>
               {t.breakScore}: <strong style={{ color: '#fff' }}>{gameScore}</strong>
             </p>
-            <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 13 }}>
-              {palName} est fier de toi! 🌟
-            </p>
+            <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 13 }}>{palName} est fier de toi! 🌟</p>
           </div>
         )}
       </div>
 
-      {/* Continue button */}
       <div style={{ padding: '12px 16px 24px', flexShrink: 0 }}>
-        <button
-          onClick={onFinish}
-          disabled={!gameDone && breakLeft > 0}
-          style={{
-            width: '100%', padding: '14px',
-            background: gameDone || breakLeft === 0
-              ? `linear-gradient(135deg, #0B1F4B, ${palette.main})`
-              : 'rgba(255,255,255,.08)',
-            color: gameDone || breakLeft === 0 ? '#FBBF24' : 'rgba(255,255,255,.3)',
-            border: 'none', borderRadius: 16, fontWeight: 800, fontSize: 15,
-            cursor: gameDone || breakLeft === 0 ? 'pointer' : 'default',
-            fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
-          }}
-        >
-          {gameDone || breakLeft === 0
-            ? t.breakContinue
-            : `Termine le jeu pour continuer · ${breakMins}:${breakSecs}`
-          }
+        <button onClick={onFinish} disabled={!gameDone && breakLeft > 0} style={{
+          width: '100%', padding: '14px',
+          background: gameDone || breakLeft === 0 ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : 'rgba(255,255,255,.08)',
+          color: gameDone || breakLeft === 0 ? '#FBBF24' : 'rgba(255,255,255,.3)',
+          border: 'none', borderRadius: 16, fontWeight: 800, fontSize: 15,
+          cursor: gameDone || breakLeft === 0 ? 'pointer' : 'default',
+          fontFamily: 'var(--font-jakarta)', transition: 'all .2s',
+        }}>
+          {gameDone || breakLeft === 0 ? t.breakContinue : `Termine le jeu pour continuer · ${breakMins}:${breakSecs}`}
         </button>
       </div>
     </div>
@@ -531,13 +482,14 @@ export default function AskPage() {
   const t          = T[lang]
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [phase, setPhase]               = useState<'setup' | 'chat' | 'flashcards'>('setup')
+  const [phase, setPhase]               = useState<'setup'|'chat'|'flashcards'>('setup')
   const [subject, setSubject]           = useState(SUBJECTS[0])
+  const [topic, setTopic]               = useState<Topic|null>(null)
   const [pomodoroOn, setPomodoroOn]     = useState(true)
   const [messages, setMessages]         = useState<Message[]>([])
   const [input, setInput]               = useState('')
   const [loading, setLoading]           = useState(false)
-  const [sessionStart, setSessionStart] = useState<Date | null>(null)
+  const [sessionStart, setSessionStart] = useState<Date|null>(null)
   const [elapsed, setElapsed]           = useState(0)
   const [showMusic, setShowMusic]       = useState(false)
   const [isWide, setIsWide]             = useState(false)
@@ -556,14 +508,11 @@ export default function AskPage() {
 
   useEffect(() => {
     const check = () => setIsWide(window.innerWidth >= 768)
-    check()
-    window.addEventListener('resize', check)
+    check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
 
   useEffect(() => {
     if (!sessionStart) return
@@ -573,29 +522,23 @@ export default function AskPage() {
     return () => clearInterval(interval)
   }, [sessionStart])
 
-  // Trigger break when Pomodoro completes
   useEffect(() => {
     if (pomodoroOn && pomodoroLeft === 0 && !breakShown && phase === 'chat' && !sessionDone) {
-      const timeout = setTimeout(() => {
-        setShowBreak(true)
-        setBreakShown(true)
-      }, 2000)
+      const timeout = setTimeout(() => { setShowBreak(true); setBreakShown(true) }, 2000)
       return () => clearTimeout(timeout)
     }
   }, [pomodoroLeft, pomodoroOn, breakShown, phase, sessionDone])
 
+  // Reset topic when subject changes
+  useEffect(() => { setTopic(null) }, [subject])
+
   const loadFlashcards = async () => {
     if (!child) return
-    const { data } = await supabase
-      .from('flashcards').select('*')
-      .eq('child_id', child.id)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('flashcards').select('*').eq('child_id', child.id).order('created_at', { ascending: false })
     if (data) setFlashcards(data)
   }
 
-  useEffect(() => {
-    if (phase === 'flashcards') loadFlashcards()
-  }, [phase])
+  useEffect(() => { if (phase === 'flashcards') loadFlashcards() }, [phase])
 
   if (!child) return null
 
@@ -605,13 +548,13 @@ export default function AskPage() {
   const creature    = child.pal?.creature || 'land'
   const palPalette  = child.pal?.palette || 'ocean'
 
-  const personalityEmojis: Record<string, string> = { brave: '⚡', curious: '🔍', funny: '😄', calm: '🌊' }
-  const personalityEmoji = personalityEmojis[personality] || '⭐'
+  const availableTopics = getTopicsForGrade(subject, child.grade)
 
   const startSession = () => {
+    const topicStr = topic ? ` — chapitre: **${topic.label}**` : ''
     const greeting = lang === 'fr'
-      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}** aujourd'hui${pomodoroOn ? ' — le timer de 25 min est lancé!' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
-      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}** jodi a${pomodoroOn ? ' — timer 25 min kòmanse!' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
+      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}**${topicStr} aujourd'hui${pomodoroOn ? ' — le timer de 25 min est lancé!' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
+      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}**${topicStr} jodi a${pomodoroOn ? ' — timer 25 min kòmanse!' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
 
     setMessages([{ role: 'assistant', content: greeting }])
     setSessionStart(new Date())
@@ -627,29 +570,24 @@ export default function AskPage() {
   const handleBreakFinish = () => {
     setShowBreak(false)
     setPomodorosCompleted(p => p + 1)
-    // Reset timer for next Pomodoro
     setSessionStart(new Date())
     setElapsed(0)
     setBreakShown(false)
-
-    const continueMsg: Message = {
+    setMessages(m => [...m, {
       role: 'assistant',
       content: lang === 'fr'
-        ? `Excellent! Pause terminée 💪 Nouveau Pomodoro lancé — 25 minutes de focus sur **${subject}**. Tu peux continuer à me poser des questions!`
-        : `Ekselan! Repo fini 💪 Nouvo Pomodoro kòmanse — 25 minit fokis sou **${subject}**. Ou ka kontinye poze m kesyon!`,
-    }
-    setMessages(m => [...m, continueMsg])
+        ? `Excellent! Pause terminée 💪 Nouveau Pomodoro lancé — 25 minutes de focus sur **${subject}**${topic ? ` · ${topic.label}` : ''}. Continue comme ça!`
+        : `Ekselan! Repo fini 💪 Nouvo Pomodoro kòmanse — 25 minit fokis sou **${subject}**. Kontinye konsa!`,
+    }])
   }
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
-
     const userMsg: Message = { role: 'user', content: input }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -658,6 +596,7 @@ export default function AskPage() {
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
           palName, personality, subject, lang,
           pomodoro: pomodoroOn, palPalette, creature,
+          chapter: topic ? topic.label : null,
         }),
       })
       const data = await res.json()
@@ -701,8 +640,7 @@ export default function AskPage() {
     })
 
     if (pts > 0) {
-      const { data: existing } = await supabase
-        .from('points').select('total').eq('child_id', child.id).single()
+      const { data: existing } = await supabase.from('points').select('total').eq('child_id', child.id).single()
       if (existing) {
         await supabase.from('points').update({ total: existing.total + pts }).eq('child_id', child.id)
       } else {
@@ -715,7 +653,7 @@ export default function AskPage() {
     setSessionStart(null)
   }
 
-  // ── SETUP ───────────────────────────────────────────────────────
+  // ── SETUP ────────────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
@@ -733,6 +671,8 @@ export default function AskPage() {
       </div>
 
       <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Subject */}
         <div>
           <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.subject}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -749,12 +689,52 @@ export default function AskPage() {
           </div>
         </div>
 
+        {/* QEP Topic selector */}
+        {availableTopics.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.topic}</p>
+              <span style={{ color: '#94A3B8', fontSize: 12 }}>{t.topicOptional}</span>
+            </div>
+            <p style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>
+              {t.topicHint.replace('palName', palName)}
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <button onClick={() => setTopic(null)} style={{
+                padding: '7px 14px', borderRadius: 99,
+                background: topic === null ? '#0B1F4B' : '#fff',
+                color: topic === null ? '#FBBF24' : '#64748B',
+                fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                border: `1.5px solid ${topic === null ? '#0B1F4B' : '#E2E8F0'}`,
+                fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
+              }}>{t.topicGeneral}</button>
+              {availableTopics.map(tp => (
+                <button key={tp.id} onClick={() => setTopic(topic?.id === tp.id ? null : tp)} style={{
+                  padding: '7px 14px', borderRadius: 99,
+                  background: topic?.id === tp.id ? palette.main : '#fff',
+                  color: topic?.id === tp.id ? '#fff' : '#64748B',
+                  fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                  border: `1.5px solid ${topic?.id === tp.id ? palette.main : '#E2E8F0'}`,
+                  fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
+                }}>{tp.label}</button>
+              ))}
+            </div>
+            {topic && (
+              <div style={{ marginTop: 10, background: '#F0F9FF', borderRadius: 12, padding: '10px 14px', border: '1px solid #BAE6FD' }}>
+                <p style={{ color: '#0369A1', fontSize: 12, fontWeight: 600 }}>
+                  📚 {palName} se concentrera sur : <strong>{topic.label}</strong>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pomodoro toggle */}
         <div onClick={() => setPomodoroOn(p => !p)} style={{
           background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
           border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
           borderRadius: 20, padding: '16px 20px',
-          display: 'flex', alignItems: 'center', gap: 16,
-          cursor: 'pointer', transition: 'all .2s',
+          display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all .2s',
         }}>
           <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>⏱️</div>
           <div style={{ flex: 1 }}>
@@ -769,14 +749,13 @@ export default function AskPage() {
         {pomodoroOn && (
           <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <span style={{ fontSize: 22, flexShrink: 0 }}>⭐</span>
-            <div>
-              <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
-                Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Après 25 min, une pause de 5 min avec un mini-jeu thématique apparaît automatiquement. Chaque Pomodoro complété = <strong>50 points</strong>.
-              </p>
-            </div>
+            <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
+              Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Après 25 min, une pause de 5 min avec un mini-jeu apparaît. Chaque Pomodoro = <strong>50 points</strong>.
+            </p>
           </div>
         )}
 
+        {/* Music */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '16px 18px', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 46, height: 46, borderRadius: 14, background: '#F4F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🎵</div>
           <div style={{ flex: 1 }}>
@@ -786,11 +765,11 @@ export default function AskPage() {
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
         </div>
 
+        {/* Flashcards button */}
         <button onClick={() => setPhase('flashcards')} style={{
           width: '100%', padding: '13px', background: '#fff',
           color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16,
-          fontWeight: 700, fontSize: 14, cursor: 'pointer',
-          fontFamily: 'var(--font-jakarta)',
+          fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-jakarta)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           🗂️ {t.flashcardsTitle}
@@ -810,7 +789,7 @@ export default function AskPage() {
     </div>
   )
 
-  // ── FLASHCARDS ───────────────────────────────────────────────────
+  // ── FLASHCARDS ────────────────────────────────────────────────────
   if (phase === 'flashcards') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '28px 32px 32px' : '20px 20px 28px' }}>
@@ -832,10 +811,24 @@ export default function AskPage() {
               const isFlipped = flippedCards.has(card.id)
               const imgUrl = card.image_prompt ? buildImageUrl(card.image_prompt) : null
               return (
-                <div key={card.id} onClick={() => setFlippedCards(prev => { const next = new Set(prev); if (next.has(card.id)) next.delete(card.id); else next.add(card.id); return next })} style={{ background: isFlipped ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff', borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${isFlipped ? palette.main : '#E2E8F0'}`, cursor: 'pointer', transition: 'all .3s', minHeight: 200 }}>
+                <div key={card.id} onClick={() => setFlippedCards(prev => {
+                  const next = new Set(prev)
+                  if (next.has(card.id)) next.delete(card.id); else next.add(card.id)
+                  return next
+                })} style={{
+                  background: isFlipped ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff',
+                  borderRadius: 20, overflow: 'hidden',
+                  border: `1.5px solid ${isFlipped ? palette.main : '#E2E8F0'}`,
+                  cursor: 'pointer', transition: 'all .3s', minHeight: 200,
+                }}>
                   {!isFlipped ? (
                     <>
-                      {imgUrl && <div style={{ height: 140, overflow: 'hidden' }}><img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} /></div>}
+                      {imgUrl && (
+                        <div style={{ height: 140, overflow: 'hidden' }}>
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                        </div>
+                      )}
                       <div style={{ padding: '14px 16px' }}>
                         <span style={{ background: '#DBEAFE', color: '#3B52D4', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{card.subject}</span>
                         <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 14, marginTop: 8 }}>{card.question}</p>
@@ -861,16 +854,10 @@ export default function AskPage() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)', position: 'relative' }}>
 
-      {/* Break overlay */}
       {showBreak && (
         <BreakOverlay
-          creature={creature}
-          palette={palette}
-          palName={palName}
-          personalityEmoji={personalityEmoji}
-          lang={lang}
-          t={t}
-          onFinish={handleBreakFinish}
+          creature={creature} palette={palette} palName={palName}
+          lang={lang} t={t} onFinish={handleBreakFinish}
         />
       )}
 
@@ -886,7 +873,7 @@ export default function AskPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
               <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
-                {subject} · {pomodoroOn ? `Pomodoro ${pomodorosCompleted > 0 ? `· ${pomodorosCompleted}✓` : ''}` : 'Session libre'}
+                {subject}{topic ? ` · ${topic.label}` : ''} · {pomodoroOn ? `Pomodoro${pomodorosCompleted > 0 ? ` · ${pomodorosCompleted}✓` : ''}` : 'Libre'}
               </span>
             </div>
           </div>
@@ -1009,16 +996,8 @@ export default function AskPage() {
 
         <button onClick={endSession} disabled={sessionDone} style={{
           width: '100%', padding: '11px',
-          background: sessionDone
-            ? 'rgba(255,255,255,.05)'
-            : pomodorosCompleted > 0
-              ? 'rgba(34,197,94,.15)'
-              : 'rgba(239,68,68,.15)',
-          color: sessionDone
-            ? 'rgba(255,255,255,.2)'
-            : pomodorosCompleted > 0
-              ? '#86EFAC'
-              : '#FCA5A5',
+          background: sessionDone ? 'rgba(255,255,255,.05)' : pomodorosCompleted > 0 ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.15)',
+          color: sessionDone ? 'rgba(255,255,255,.2)' : pomodorosCompleted > 0 ? '#86EFAC' : '#FCA5A5',
           border: `1px solid ${sessionDone ? 'rgba(255,255,255,.05)' : pomodorosCompleted > 0 ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)'}`,
           borderRadius: 12, fontWeight: 700, fontSize: 13,
           cursor: sessionDone ? 'default' : 'pointer',
@@ -1036,10 +1015,9 @@ export default function AskPage() {
       </div>
 
       <style>{`
-        @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes typing   { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
-        @keyframes slideUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes popIn    { from{transform:translate(-50%,-50%) scale(0)} to{transform:translate(-50%,-50%) scale(1)} }
+        @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes typing  { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
     </div>
   )

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabase } from '@/lib/supabase'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(req: NextRequest) {
   const { productId, childId } = await req.json()
-
+  const stripe = getStripe()
   const { data: product } = await supabase
     .from('products')
     .select('*')

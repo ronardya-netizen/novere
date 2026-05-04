@@ -35,13 +35,16 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const tabs = [
+ const tabs = [
     { id: 'home',    path: '/home',          labelFr: 'Accueil',  labelCr: 'Akèy',   icon: HomeIcon    },
     { id: 'ask',     path: '/home/ask',       labelFr: palName,    labelCr: palName,  icon: PalIcon     },
     { id: 'mentors', path: '/home/mentors',   labelFr: 'Mentors',  labelCr: 'Mentor', icon: MentorIcon  },
     { id: 'quests',  path: '/home/quests',    labelFr: 'Quêtes',   labelCr: 'Kèt',    icon: QuestIcon   },
+    { id: 'shop',    path: '/home/shop',      labelFr: 'Boutique', labelCr: 'Boutik', icon: ShopIcon    },
     { id: 'profile', path: '/home/profile',   labelFr: 'Profil',   labelCr: 'Pwofil', icon: ProfileIcon },
   ]
+
+
 
   const active = tabs.find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
 
@@ -193,6 +196,16 @@ function ProfileIcon({ color }: { color: string }) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" />
       <path d="M4 20C4 17 7.6 15 12 15C16.4 15 20 17 20 20" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ShopIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M6 2L3 6V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V6L18 2H6Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+      <path d="M3 6H21" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M16 10C16 12.2 14.2 14 12 14C9.8 14 8 12.2 8 10" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }

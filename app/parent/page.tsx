@@ -71,6 +71,7 @@ function Toast({ msg }: { msg: string }) {
 export default function ParentPage() {
   const [tab,      setTab]      = useState<'boutique'|'wishlist'|'profile'>('boutique')
   const [user,     setUser]     = useState<{ id:string; email:string } | null>(null)
+  const [parentName, setParentName] = useState('')
   const [child,    setChild]    = useState<Child | null>(null)
   const [points,   setPoints]   = useState(0)
   const [products, setProducts] = useState<Product[]>([])
@@ -86,10 +87,19 @@ export default function ParentPage() {
 
   useEffect(() => { loadAll() }, [])
 
-  async function loadAll() {
+async function loadAll() {
     const { data: { user: u } } = await supabase.auth.getUser()
     if (!u) return
     setUser({ id: u.id, email: u.email ?? '' })
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', u.id)
+      .single()
+
+    const fallback = u.email?.split('@')[0] ?? 'Parent'
+    setParentName(profile?.full_name ?? fallback)
 
     const [{ data: childData }, { data: prods }] = await Promise.all([
       supabase.from('children').select('id, name, grade, pal').eq('parent_id', u.id).single(),
@@ -181,7 +191,7 @@ export default function ParentPage() {
               Portail parents
             </p>
             <h1 style={{ color:C.white, fontSize:20, fontWeight:800, margin:'0 0 4px', fontFamily:'var(--font-fredoka)' }}>
-              Bonjour, {user?.email?.split('@')[0] ?? 'Parent'}
+              Bonjour, {parentName}
             </h1>
             {child && (
               <p style={{ color:'rgba(255,255,255,0.4)', fontSize:12, margin:0 }}>
@@ -248,32 +258,52 @@ export default function ParentPage() {
               </div>
             )}
 
-            <p style={{ color:C.faint, fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', margin:'0 0 12px' }}>
-              Catalogue complet
+           <p style={{ color:C.faint, fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', margin:'0 0 14px' }}>
+  Catalogue complet
             </p>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
               {available.map(p => (
-                <div key={p.id} style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:'12px 14px', display:'flex', gap:12, alignItems:'center' }}>
-                  <div style={{ width:50, height:50, borderRadius:10, background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', flexShrink:0 }}>
-                    {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <span style={{ fontSize:24 }}>🎁</span>}
+                <div key={p.id} style={{ background:C.white, border:`1px solid ${inWL(p.id)?C.navy:C.border}`, borderRadius:16, overflow:'hidden', transition:'border-color 0.2s' }}>
+                  {/* Square image */}
+                  <div style={{ aspectRatio:'1/1', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', position:'relative' }}>
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                      : <span style={{ fontSize:48 }}>🎁</span>}
+                    {inWL(p.id) && (
+                      <div style={{ position:'absolute', top:8, left:8, background:C.navy, borderRadius:6, padding:'3px 8px' }}>
+                        <span style={{ color:C.gold, fontSize:9, fontWeight:700 }}>Souhaité</span>
+                      </div>
+                    )}
+                    {p.stock > 0 && p.stock < 5 && (
+                      <div style={{ position:'absolute', top:8, right:8, background:C.red, borderRadius:6, padding:'3px 8px' }}>
+                        <span style={{ color:C.white, fontSize:9, fontWeight:700 }}>Plus que {p.stock}!</span>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <p style={{ color:C.navy, fontWeight:700, fontSize:13, margin:'0 0 3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</p>
-                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  {/* Info */}
+                  <div style={{ padding:'12px 12px 14px' }}>
+                    <p style={{ color:C.navy, fontWeight:700, fontSize:13, margin:'0 0 4px', lineHeight:1.3 }}>{p.name}</p>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10 }}>
                       <span style={{ color:C.faint, fontSize:10, textDecoration:'line-through' }}>{p.price_cad.toFixed(2)} CAD</span>
-                      <span style={{ color:C.navy, fontWeight:800, fontSize:13 }}>{discPrice(p.price_cad)} CAD</span>
-                      {inWL(p.id) && <span style={{ background:C.goldDim, color:C.navy, fontSize:9, fontWeight:700, borderRadius:4, padding:'2px 6px' }}>Souhaité</span>}
+                      <span style={{ color:C.navy, fontWeight:800, fontSize:14 }}>{discPrice(p.price_cad)} CAD</span>
                     </div>
+                    {discPct > 0 && (
+                      <p style={{ color:C.green, fontSize:10, fontWeight:600, margin:'0 0 10px' }}>
+                        Économie de {savedAmt(p.price_cad)} CAD
+                      </p>
+                    )}
+                    <button
+                      onClick={() => setBought(prev => [...prev, p.id])}
+                      style={{ width:'100%', background:C.navy, border:'none', borderRadius:10, padding:'9px 0', color:C.gold, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}
+                    >
+                      Acheter
+                    </button>
                   </div>
-                  {p.stock > 0 && p.stock < 5 && (
-                    <span style={{ color:C.red, fontSize:9, fontWeight:700, flexShrink:0 }}>Plus que {p.stock}!</span>
-                  )}
-                  <button onClick={() => setBought(prev => [...prev, p.id])} style={{ background:C.navy, border:'none', borderRadius:10, padding:'8px 12px', color:C.gold, fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0, fontFamily:'var(--font-jakarta)' }}>
-                    Acheter
-                  </button>
                 </div>
               ))}
             </div>
+                      
+
 
             {bought.length > 0 && (
               <div style={{ background:C.greenBg, border:'1px solid #86EFAC', borderRadius:12, padding:'12px 16px', marginTop:14, textAlign:'center' }}>

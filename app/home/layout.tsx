@@ -40,13 +40,16 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
     { id: 'ask',     path: '/home/ask',       labelFr: palName,    labelCr: palName,  icon: PalIcon     },
     { id: 'mentors', path: '/home/mentors',   labelFr: 'Mentors',  labelCr: 'Mentor', icon: MentorIcon  },
     { id: 'quests',  path: '/home/quests',    labelFr: 'Quêtes',   labelCr: 'Kèt',    icon: QuestIcon   },
-    { id: 'shop',    path: '/home/shop',      labelFr: 'Boutique', labelCr: 'Boutik', icon: ShopIcon    },
+    { id: 'shop', path: '/home/shop', labelFr: 'Mes Récompenses', labelCr: 'Rekonpans', icon: ShopIcon },
     { id: 'profile', path: '/home/profile',   labelFr: 'Profil',   labelCr: 'Pwofil', icon: ProfileIcon },
   ]
 
 
 
-  const active = tabs.find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
+  const active = [...tabs]
+  .sort((a, b) => b.path.length - a.path.length)
+  .find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
+
 
   return (
     <LangContext.Provider value={{ lang, setLang }}>

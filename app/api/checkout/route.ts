@@ -4,19 +4,21 @@ import { supabase } from '@/lib/supabase'
 
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-export async function POST(req: NextRequest) {
-  const { productId, childId } = await req.json()
-  const stripe = getStripe()
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', productId)
-    .single()
+type CartItem = {
+  productId: string
+  quantity: number
+}
 
-  if (!product) {
-    return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+export async function POST(req: NextRequest) {
+  const { cartItems, childId }: { cartItems: CartItem[]; childId: string } = await req.json()
+
+  if (!cartItems?.length) {
+    return NextResponse.json({ error: 'Panier vide' }, { status: 400 })
   }
 
+  const stripe = getStripe()
+
+  // Get child's points for discount
   const { data: pointsData } = await supabase
     .from('points')
     .select('total_points')
@@ -24,39 +26,56 @@ export async function POST(req: NextRequest) {
     .single()
 
   const points = pointsData?.total_points ?? 0
-
   const discountPct = points >= 5000 ? 30
     : points >= 2500 ? 20
     : points >= 1000 ? 10
     : points >= 500  ? 5
     : 0
 
-  const originalCents = Math.round(product.price_cad * 100)
-  const finalCents = Math.round(originalCents * (1 - discountPct / 100))
+  // Fetch all products in the cart
+  const productIds = cartItems.map(i => i.productId)
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('*')
+    .in('id', productIds)
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: [{
+  if (error || !products?.length) {
+    return NextResponse.json({ error: 'Produits introuvables' }, { status: 404 })
+  }
+
+  // Build Stripe line items
+  const lineItems = cartItems.map(cartItem => {
+    const product = products.find(p => p.id === cartItem.productId)
+    if (!product) return null
+
+    const originalCents  = Math.round(product.price_cad * 100)
+    const discountedCents = Math.round(originalCents * (1 - discountPct / 100))
+
+    return {
       price_data: {
         currency: 'cad',
         product_data: {
           name: product.name,
           images: product.image_url ? [product.image_url] : [],
         },
-        unit_amount: finalCents,
+        unit_amount: discountedCents,
       },
-      quantity: 1,
-    }],
+      quantity: cartItem.quantity,
+    }
+  }).filter(Boolean)
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: lineItems as any,
     shipping_address_collection: { allowed_countries: ['CA'] },
     metadata: {
-      productId,
       childId,
       discountPct: String(discountPct),
-      fulfillmentType: product.type,
+      cartItems: JSON.stringify(cartItems),
     },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/home/shop?success=true`,
-    cancel_url:  `${process.env.NEXT_PUBLIC_SITE_URL}/home/shop`,
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/parent?success=true`,
+    cancel_url:  `${process.env.NEXT_PUBLIC_SITE_URL}/parent`,
   })
 
   return NextResponse.json({ url: session.url })

@@ -4,7 +4,13 @@ import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from '../layout'
-import { getTopicsForGrade, type Topic } from '@/lib/curriculum'
+import {
+  getTopicsForGrade,
+  getSubjectLabel,
+  type Subject,
+  type GradeLevel,
+  ALL_SUBJECTS,
+} from '@/lib/curriculum'
 
 const PALETTES: Record<string, any> = {
   ocean:   { main: '#3B52D4', accent: '#7DD3FC', glow: 'rgba(59,82,212,.4)'   },
@@ -24,33 +30,25 @@ const CREATURE_THEMES: Record<string, { world: string; obstacles: string[]; bg: 
   cosmic: { world: 'Cosmos', obstacles: ['☄️','🌑','💫'], bg: '#0a0a1a', ground: '#1a0a3a' },
 }
 
-const SUBJECTS = [
-  'Mathématiques',
-  'Français — Lecture',
-  'Français — Écriture',
-  'Science et technologie',
-  'Anglais langue seconde',
-  'Univers social',
-]
-
-const MUSIC: Record<string, { url: string; label: string }> = {
-  brave:   { url: 'https://www.youtube.com/embed/videoseries?list=PLGdBvXL8ynW_8wHZn9bxFGkLFIkFyGUhm&autoplay=1', label: 'Energetic Lo-Fi 🔥' },
-  curious: { url: 'https://www.youtube.com/embed/videoseries?list=PLGdBvXL8ynW8A34rSqjvLtzPblMuEapHv&autoplay=1', label: 'Ambient Nature 🌿'   },
-  funny:   { url: 'https://www.youtube.com/embed/videoseries?list=PLGdBvXL8ynW-QqMIFcN3KIKFnSp2fHbDL&autoplay=1', label: 'Chill Hop 😄'        },
-  calm:    { url: 'https://www.youtube.com/embed/videoseries?list=PLGdBvXL8ynW9zC2UnAKqBBHBMbAtKkFGN&autoplay=1', label: 'Soft Piano 🌊'       },
+// Subject display config
+const SUBJECT_CONFIG: Record<Subject, { emoji: string; shortLabel: string }> = {
+  mathematiques: { emoji: '🔢', shortLabel: 'Maths'    },
+  francais:      { emoji: '📖', shortLabel: 'Français'  },
+  histoire:      { emoji: '🏛️', shortLabel: 'Histoire'  },
+  sciences:      { emoji: '🔬', shortLabel: 'Sciences'  },
 }
 
 const T = {
   fr: {
     title: 'Demande à', subtitle: 'Choisis une matière et commence',
-    subject: 'Matière', topic: 'Sujet spécifique',
-    topicOptional: '(optionnel)', topicHint: 'Choisis le chapitre sur lequel tu travailles.',
+    subject: 'Matière', topic: 'Chapitre',
+    topicOptional: '(optionnel)', topicHint: 'Quel chapitre travailles-tu?',
     topicGeneral: 'Général',
     startSession: 'Commencer la session →',
     typeMessage: 'Pose ta question...',
     endSession: 'Terminer la session',
     sessionSaved: 'Session sauvegardée! +', points: 'pts ⭐',
-    pomodoroLabel: 'Focus', musicLabel: 'Musique de focus',
+    pomodoroLabel: 'Focus',
     saveFlashcard: 'Sauvegarder en flashcard',
     flashcardSaved: '✓ Flashcard sauvegardée!',
     flashcardsTitle: 'Mes flashcards',
@@ -63,14 +61,14 @@ const T = {
   },
   cr: {
     title: 'Mande', subtitle: 'Chwazi yon sijè epi kòmanse',
-    subject: 'Sijè', topic: 'Sijè espesifik',
-    topicOptional: '(opsyonèl)', topicHint: 'Chwazi chapit ou ap travay sou li.',
+    subject: 'Sijè', topic: 'Chapit',
+    topicOptional: '(opsyonèl)', topicHint: 'Ki chapit ou ap travay sou li?',
     topicGeneral: 'Jeneral',
     startSession: 'Kòmanse sesyon →',
     typeMessage: 'Poze kesyon ou...',
     endSession: 'Fini sesyon',
     sessionSaved: 'Sesyon sove! +', points: 'pwen ⭐',
-    pomodoroLabel: 'Fokis', musicLabel: 'Mizik fokis',
+    pomodoroLabel: 'Fokis',
     saveFlashcard: 'Sove kòm flashcard',
     flashcardSaved: '✓ Flashcard sove!',
     flashcardsTitle: 'Flashcard mwen yo',
@@ -80,7 +78,7 @@ const T = {
     breakSub: 'Ou fini yon Pomodoro! Jwe yon ti kras anvan ou kontinye.',
     breakContinue: 'Kontinye sesyon →',
     breakScore: 'Pwen',
-  }
+  },
 }
 
 const POMODORO   = 25 * 60
@@ -112,7 +110,7 @@ function buildImageUrl(prompt: string): string {
   return `https://image.pollinations.ai/prompt/${encoded}?width=400&height=300&nologo=true`
 }
 
-// ── MEMORY GAME ──────────────────────────────────────────────────
+// ── MEMORY GAME ───────────────────────────────────────────────────
 function MemoryGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
   const baseEmojis = [...theme.obstacles, '⭐', '🎯', '🏆', '💎']
@@ -169,7 +167,7 @@ function MemoryGame({ creature, palette, palName, onComplete }: { creature: stri
   )
 }
 
-// ── DODGE GAME ───────────────────────────────────────────────────
+// ── DODGE GAME ────────────────────────────────────────────────────
 function DodgeGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
   const [palY, setPalY]           = useState(60)
@@ -256,14 +254,14 @@ function DodgeGame({ creature, palette, palName, onComplete }: { creature: strin
   )
 }
 
-// ── TAP GAME ─────────────────────────────────────────────────────
+// ── TAP GAME ──────────────────────────────────────────────────────
 function TapGame({ creature, palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const theme = CREATURE_THEMES[creature] || CREATURE_THEMES.land
   const [targets, setTargets]   = useState<{ id: number; x: number; y: number; emoji: string }[]>([])
   const [score, setScore]       = useState(0)
   const [timeLeft, setTimeLeft] = useState(30)
   const [started, setStarted]   = useState(false)
-  const doneRef = useRef(false)
+  const doneRef  = useRef(false)
   const scoreRef = useRef(0)
 
   useEffect(() => {
@@ -279,7 +277,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [started])
+  }, [started, onComplete])
 
   useEffect(() => {
     if (!started || timeLeft === 0) return
@@ -336,7 +334,7 @@ function TapGame({ creature, palette, palName, onComplete }: { creature: string;
   )
 }
 
-// ── BREATHE GAME ─────────────────────────────────────────────────
+// ── BREATHE GAME ──────────────────────────────────────────────────
 function BreatheGame({ palette, palName, onComplete }: { creature: string; palette: any; palName: string; onComplete: (score: number) => void }) {
   const [phase, setPhase]   = useState<'inhale'|'hold'|'exhale'>('inhale')
   const [count, setCount]   = useState(4)
@@ -362,7 +360,7 @@ function BreatheGame({ palette, palName, onComplete }: { creature: string; palet
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [onComplete])
 
   const size  = phase === 'exhale' ? 60 : 120
   const label = phase === 'inhale' ? 'Inspire...' : phase === 'hold' ? 'Retiens...' : 'Expire...'
@@ -483,15 +481,15 @@ export default function AskPage() {
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const [phase, setPhase]               = useState<'setup'|'chat'|'flashcards'>('setup')
-  const [subject, setSubject]           = useState(SUBJECTS[0])
-  const [topic, setTopic]               = useState<Topic|null>(null)
+  const [subject, setSubject]           = useState<Subject>('mathematiques')
+  // topic is now a plain string (a subtopic from the curriculum)
+  const [topic, setTopic]               = useState<string | null>(null)
   const [pomodoroOn, setPomodoroOn]     = useState(true)
   const [messages, setMessages]         = useState<Message[]>([])
   const [input, setInput]               = useState('')
   const [loading, setLoading]           = useState(false)
   const [sessionStart, setSessionStart] = useState<Date|null>(null)
   const [elapsed, setElapsed]           = useState(0)
-  const [showMusic, setShowMusic]       = useState(false)
   const [isWide, setIsWide]             = useState(false)
   const [ptsEarned, setPtsEarned]       = useState(0)
   const [sessionDone, setSessionDone]   = useState(false)
@@ -548,13 +546,18 @@ export default function AskPage() {
   const creature    = child.pal?.creature || 'land'
   const palPalette  = child.pal?.palette || 'ocean'
 
-  const availableTopics = getTopicsForGrade(subject, child.grade)
+  // Get the curriculum object for this subject + grade
+  // child.grade may be undefined for new children — default to grade 5
+  const grade         = (child.grade ?? 5) as GradeLevel
+  const curriculumObj = getTopicsForGrade(subject, grade)
+  // subtopics is the array we iterate over
+  const subtopics     = curriculumObj?.subtopics ?? []
 
   const startSession = () => {
-    const topicStr = topic ? ` — chapitre: **${topic.label}**` : ''
+    const topicStr = topic ? ` — chapitre: **${topic}**` : ''
     const greeting = lang === 'fr'
-      ? `Bonjour! Je suis ${palName}. On travaille sur **${subject}**${topicStr} aujourd'hui${pomodoroOn ? ' — le timer de 25 min est lancé!' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
-      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${subject}**${topicStr} jodi a${pomodoroOn ? ' — timer 25 min kòmanse!' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
+      ? `Bonjour! Je suis ${palName}. On travaille sur **${getSubjectLabel(subject)}**${topicStr} aujourd'hui${pomodoroOn ? ' — le timer de 25 min est lancé!' : ''}. Tu peux me poser des questions quand tu en as besoin. Bonne étude! 🎯`
+      : `Bonjou! Mwen se ${palName}. Nou ap travay sou **${getSubjectLabel(subject)}**${topicStr} jodi a${pomodoroOn ? ' — timer 25 min kòmanse!' : ''}. Ou ka poze m kesyon nenpòt kilè. Bon etid! 🎯`
 
     setMessages([{ role: 'assistant', content: greeting }])
     setSessionStart(new Date())
@@ -576,8 +579,8 @@ export default function AskPage() {
     setMessages(m => [...m, {
       role: 'assistant',
       content: lang === 'fr'
-        ? `Excellent! Pause terminée 💪 Nouveau Pomodoro lancé — 25 minutes de focus sur **${subject}**${topic ? ` · ${topic.label}` : ''}. Continue comme ça!`
-        : `Ekselan! Repo fini 💪 Nouvo Pomodoro kòmanse — 25 minit fokis sou **${subject}**. Kontinye konsa!`,
+        ? `Excellent! Pause terminée 💪 Nouveau Pomodoro lancé — 25 minutes de focus sur **${getSubjectLabel(subject)}**${topic ? ` · ${topic}` : ''}. Continue comme ça!`
+        : `Ekselan! Repo fini 💪 Nouvo Pomodoro kòmanse — 25 minit fokis sou **${getSubjectLabel(subject)}**. Kontinye konsa!`,
     }])
   }
 
@@ -593,13 +596,26 @@ export default function AskPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          palName, personality, subject, lang,
+          messages:  newMessages.map(m => ({ role: m.role, content: m.content })),
+          palName, personality, lang,
+          subject, grade,
+          chapter: topic ?? null,
           pomodoro: pomodoroOn, palPalette, creature,
-          chapter: topic ? topic.label : null,
+          childId: child.id,
         }),
       })
       const data = await res.json()
+
+      // Handle session limit reached
+      if (res.status === 429) {
+        setMessages(m => [...m, {
+          role: 'assistant',
+          content: data.message ?? 'Tu as atteint ta limite de sessions pour aujourd\'hui. Reviens demain! 🌙',
+        }])
+        setLoading(false)
+        return
+      }
+
       if (data.message) {
         const imageUrl = data.imagePrompt ? buildImageUrl(data.imagePrompt) : undefined
         setMessages(m => [...m, {
@@ -618,9 +634,10 @@ export default function AskPage() {
     const userMsg = messages[msgIndex - 1]
     if (!aiMsg || aiMsg.role !== 'assistant') return
     await supabase.from('flashcards').insert({
-      child_id: child.id, subject,
-      question: userMsg?.content || subject,
-      answer:   aiMsg.shortAnswer || aiMsg.content.slice(0, 150),
+      child_id:     child.id,
+      subject:      getSubjectLabel(subject),
+      question:     userMsg?.content || getSubjectLabel(subject),
+      answer:       aiMsg.shortAnswer || aiMsg.content.slice(0, 150),
       image_prompt: aiMsg.imagePrompt || '',
     })
     setSavedIds(prev => new Set([...prev, msgIndex]))
@@ -634,9 +651,11 @@ export default function AskPage() {
     const pts           = completedFull ? pomodorosCompleted * 50 : 0
 
     await supabase.from('study_sessions').insert({
-      child_id: child.id, subject,
-      technique: pomodoroOn ? 'pomodoro' : 'free',
-      duration_mins: durationMins, points_earned: pts,
+      child_id:      child.id,
+      subject:       getSubjectLabel(subject),
+      technique:     pomodoroOn ? 'pomodoro' : 'free',
+      duration_mins: durationMins,
+      points_earned: pts,
     })
 
     if (pts > 0) {
@@ -653,7 +672,7 @@ export default function AskPage() {
     setSessionStart(null)
   }
 
-  // ── SETUP ────────────────────────────────────────────────────────
+  // ── SETUP ─────────────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
@@ -672,64 +691,97 @@ export default function AskPage() {
 
       <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Subject */}
+        {/* ── SUBJECT SELECTOR ── */}
         <div>
-          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.subject}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {SUBJECTS.map(s => (
-              <button key={s} onClick={() => setSubject(s)} style={{
-                padding: '9px 18px', borderRadius: 99,
-                background: subject === s ? '#0B1F4B' : '#fff',
-                color: subject === s ? '#FBBF24' : '#64748B',
-                fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                border: `1.5px solid ${subject === s ? '#0B1F4B' : '#E2E8F0'}`,
-                fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
-              }}>{s}</button>
-            ))}
+          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+            {t.subject}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {ALL_SUBJECTS.map(s => {
+              const cfg     = SUBJECT_CONFIG[s]
+              const isActive = subject === s
+              return (
+                <button key={s} onClick={() => setSubject(s)} style={{
+                  padding: '14px 16px',
+                  borderRadius: 16,
+                  background: isActive ? '#0B1F4B' : '#fff',
+                  color:      isActive ? '#FBBF24' : '#64748B',
+                  fontWeight: 700,
+                  fontSize:   13,
+                  cursor:    'pointer',
+                  border:    `1.5px solid ${isActive ? '#0B1F4B' : '#E2E8F0'}`,
+                  fontFamily:'var(--font-jakarta)',
+                  transition:'all .15s',
+                  display:   'flex',
+                  alignItems:'center',
+                  gap:        10,
+                  textAlign: 'left',
+                }}>
+                  <span style={{ fontSize: 22, flexShrink: 0 }}>{cfg.emoji}</span>
+                  <span style={{ lineHeight: 1.3 }}>{cfg.shortLabel}</span>
+                </button>
+              )
+            })}
           </div>
+
+          {/* Program label — shows the official QEP label for this grade */}
+          {curriculumObj && (
+            <p style={{ color: '#94A3B8', fontSize: 11, marginTop: 8, paddingLeft: 4 }}>
+              Programme : {curriculumObj.programLabel}
+            </p>
+          )}
         </div>
 
-        {/* QEP Topic selector */}
-        {availableTopics.length > 0 && (
+        {/* ── TOPIC / CHAPTER SELECTOR ── */}
+        {subtopics.length > 0 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.topic}</p>
+              <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                {t.topic}
+              </p>
               <span style={{ color: '#94A3B8', fontSize: 12 }}>{t.topicOptional}</span>
             </div>
-            <p style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>
-              {t.topicHint.replace('palName', palName)}
-            </p>
+            <p style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>{t.topicHint}</p>
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {/* General option */}
               <button onClick={() => setTopic(null)} style={{
                 padding: '7px 14px', borderRadius: 99,
                 background: topic === null ? '#0B1F4B' : '#fff',
-                color: topic === null ? '#FBBF24' : '#64748B',
+                color:      topic === null ? '#FBBF24' : '#64748B',
                 fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                border: `1.5px solid ${topic === null ? '#0B1F4B' : '#E2E8F0'}`,
-                fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
-              }}>{t.topicGeneral}</button>
-              {availableTopics.map(tp => (
-                <button key={tp.id} onClick={() => setTopic(topic?.id === tp.id ? null : tp)} style={{
+                border:    `1.5px solid ${topic === null ? '#0B1F4B' : '#E2E8F0'}`,
+                fontFamily:'var(--font-jakarta)', transition: 'all .15s',
+              }}>
+                {t.topicGeneral}
+              </button>
+
+              {/* One button per subtopic string */}
+              {subtopics.map(tp => (
+                <button key={tp} onClick={() => setTopic(topic === tp ? null : tp)} style={{
                   padding: '7px 14px', borderRadius: 99,
-                  background: topic?.id === tp.id ? palette.main : '#fff',
-                  color: topic?.id === tp.id ? '#fff' : '#64748B',
+                  background: topic === tp ? palette.main : '#fff',
+                  color:      topic === tp ? '#fff'        : '#64748B',
                   fontWeight: 600, fontSize: 12, cursor: 'pointer',
-                  border: `1.5px solid ${topic?.id === tp.id ? palette.main : '#E2E8F0'}`,
-                  fontFamily: 'var(--font-jakarta)', transition: 'all .15s',
-                }}>{tp.label}</button>
+                  border:    `1.5px solid ${topic === tp ? palette.main : '#E2E8F0'}`,
+                  fontFamily:'var(--font-jakarta)', transition: 'all .15s',
+                }}>
+                  {tp}
+                </button>
               ))}
             </div>
+
             {topic && (
               <div style={{ marginTop: 10, background: '#F0F9FF', borderRadius: 12, padding: '10px 14px', border: '1px solid #BAE6FD' }}>
                 <p style={{ color: '#0369A1', fontSize: 12, fontWeight: 600 }}>
-                  📚 {palName} se concentrera sur : <strong>{topic.label}</strong>
+                  📚 {palName} se concentrera sur : <strong>{topic}</strong>
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {/* Pomodoro toggle */}
+        {/* ── POMODORO TOGGLE ── */}
         <div onClick={() => setPomodoroOn(p => !p)} style={{
           background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
           border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
@@ -739,7 +791,9 @@ export default function AskPage() {
           <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>⏱️</div>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>Mode Pomodoro</p>
-            <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min focus + pause jeu · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
+            <p style={{ color: '#64748B', fontSize: 13 }}>
+              {pomodoroOn ? 'Activé · 25 min focus + pause jeu · +50 pts' : 'Désactivé · session libre · pas de points'}
+            </p>
           </div>
           <div style={{ width: 48, height: 26, borderRadius: 99, background: pomodoroOn ? palette.main : '#E2E8F0', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: 3, left: pomodoroOn ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
@@ -755,8 +809,7 @@ export default function AskPage() {
           </div>
         )}
 
-
-        {/* Flashcards button */}
+        {/* ── FLASHCARDS BUTTON ── */}
         <button onClick={() => setPhase('flashcards')} style={{
           width: '100%', padding: '13px', background: '#fff',
           color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16,
@@ -800,7 +853,7 @@ export default function AskPage() {
           <div style={{ display: 'grid', gridTemplateColumns: isWide ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: 16 }}>
             {flashcards.map((card: any) => {
               const isFlipped = flippedCards.has(card.id)
-              const imgUrl = card.image_prompt ? buildImageUrl(card.image_prompt) : null
+              const imgUrl    = card.image_prompt ? buildImageUrl(card.image_prompt) : null
               return (
                 <div key={card.id} onClick={() => setFlippedCards(prev => {
                   const next = new Set(prev)
@@ -841,7 +894,7 @@ export default function AskPage() {
     </div>
   )
 
-  // ── CHAT ─────────────────────────────────────────────────────────
+  // ── CHAT ──────────────────────────────────────────────────────────
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)', position: 'relative' }}>
 
@@ -864,7 +917,7 @@ export default function AskPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
               <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
-                {subject}{topic ? ` · ${topic.label}` : ''} · {pomodoroOn ? `Pomodoro${pomodorosCompleted > 0 ? ` · ${pomodorosCompleted}✓` : ''}` : 'Libre'}
+                {SUBJECT_CONFIG[subject].shortLabel}{topic ? ` · ${topic}` : ''} · {pomodoroOn ? `Pomodoro${pomodorosCompleted > 0 ? ` · ${pomodorosCompleted}✓` : ''}` : 'Libre'}
               </span>
             </div>
           </div>
@@ -879,11 +932,7 @@ export default function AskPage() {
               </p>
             </div>
           )}
-
-         </div>
-
-
-      
+        </div>
       </div>
 
       {/* Session done banner */}
@@ -959,7 +1008,7 @@ export default function AskPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input + end session */}
+      {/* Input */}
       <div style={{ padding: '10px 14px 20px', background: '#0B1F4B', borderTop: '1px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
         {!sessionDone && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
@@ -1009,4 +1058,3 @@ export default function AskPage() {
     </div>
   )
 }
-

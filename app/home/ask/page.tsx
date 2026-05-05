@@ -30,7 +30,6 @@ const CREATURE_THEMES: Record<string, { world: string; obstacles: string[]; bg: 
   cosmic: { world: 'Cosmos', obstacles: ['☄️','🌑','💫'], bg: '#0a0a1a', ground: '#1a0a3a' },
 }
 
-// Subject display config
 const SUBJECT_CONFIG: Record<Subject, { emoji: string; shortLabel: string }> = {
   mathematiques: { emoji: '🔢', shortLabel: 'Maths'    },
   francais:      { emoji: '📖', shortLabel: 'Français'  },
@@ -81,9 +80,10 @@ const T = {
   },
 }
 
-const POMODORO   = 25 * 60
-const BREAK_TIME = 5  * 60
-const GAME_TYPES = ['memory', 'dodge', 'tap', 'breathe'] as const
+const POMODORO     = 25 * 60
+const BREAK_TIME   = 5  * 60
+const GRACE_PERIOD = 3  * 60  // 3 minutes in seconds
+const GAME_TYPES   = ['memory', 'dodge', 'tap', 'breathe'] as const
 type GameType = typeof GAME_TYPES[number]
 
 type Message = {
@@ -482,7 +482,6 @@ export default function AskPage() {
 
   const [phase, setPhase]               = useState<'setup'|'chat'|'flashcards'>('setup')
   const [subject, setSubject]           = useState<Subject>('mathematiques')
-  // topic is now a plain string (a subtopic from the curriculum)
   const [topic, setTopic]               = useState<string | null>(null)
   const [pomodoroOn, setPomodoroOn]     = useState(true)
   const [messages, setMessages]         = useState<Message[]>([])
@@ -500,9 +499,19 @@ export default function AskPage() {
   const [savedIds, setSavedIds]         = useState<Set<number>>(new Set())
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
 
+  // ── TAB VISIBILITY / DISTRACTION STATE ───────────────────────────
+  const [graceLeft, setGraceLeft]       = useState(0)       // seconds remaining in grace period
+  const [showGrace, setShowGrace]       = useState(false)   // grace banner visible?
+  const graceIntervalRef  = useRef<any>(null)
+  const distractionIdRef  = useRef<string | null>(null)     // current distraction row id
+  const leftAtRef         = useRef<Date | null>(null)
+
   const pomodoroLeft = Math.max(0, POMODORO - elapsed)
   const pomodoroMins = String(Math.floor(pomodoroLeft / 60)).padStart(2, '0')
   const pomodoroSecs = String(pomodoroLeft % 60).padStart(2, '0')
+
+  const graceMins = String(Math.floor(graceLeft / 60)).padStart(2, '0')
+  const graceSecs = String(graceLeft % 60).padStart(2, '0')
 
   useEffect(() => {
     const check = () => setIsWide(window.innerWidth >= 768)
@@ -512,6 +521,7 @@ export default function AskPage() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
 
+  // ── Pomodoro timer ────────────────────────────────────────────────
   useEffect(() => {
     if (!sessionStart) return
     const interval = setInterval(() => {
@@ -527,7 +537,114 @@ export default function AskPage() {
     }
   }, [pomodoroLeft, pomodoroOn, breakShown, phase, sessionDone])
 
-  // Reset topic when subject changes
+  // ── TAB VISIBILITY LISTENER ───────────────────────────────────────
+  useEffect(() => {
+    // Only active during a chat session
+    if (phase !== 'chat' || sessionDone) return
+
+    const handleVisibility = async () => {
+      if (document.visibilityState === 'hidden') {
+        // Child left the tab
+        const now = new Date()
+        leftAtRef.current = now
+
+        // Log distraction to Supabase
+        if (child) {
+          const { data } = await supabase
+            .from('distractions')
+            .insert({
+              child_id:    child.id,
+              left_at:     now.toISOString(),
+              timer_reset: false,
+            })
+            .select('id')
+            .single()
+          if (data) distractionIdRef.current = data.id
+        }
+
+        // Start grace period countdown
+        setGraceLeft(GRACE_PERIOD)
+        setShowGrace(true)
+
+        graceIntervalRef.current = setInterval(() => {
+          setGraceLeft(prev => {
+            if (prev <= 1) {
+              // Grace period expired — reset timer, keep chat
+              clearInterval(graceIntervalRef.current)
+              setShowGrace(false)
+              setSessionStart(new Date())
+              setElapsed(0)
+              setBreakShown(false)
+
+              // Update distraction record: timer_reset = true
+              if (distractionIdRef.current && child) {
+                const returnedAt = new Date()
+                const durationAway = leftAtRef.current
+                  ? Math.floor((returnedAt.getTime() - leftAtRef.current.getTime()) / 1000)
+                  : GRACE_PERIOD
+
+                supabase
+                  .from('distractions')
+                  .update({
+                    returned_at:     returnedAt.toISOString(),
+                    duration_away_s: durationAway,
+                    timer_reset:     true,
+                  })
+                  .eq('id', distractionIdRef.current)
+                  .then(() => { distractionIdRef.current = null })
+              }
+
+              // Add system message to chat (timer reset, chat preserved)
+              setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: lang === 'fr'
+                  ? `⏱️ Tu as quitté l'application pendant plus de 3 minutes. Le timer a été remis à zéro — mais ne t'inquiète pas, ta conversation est toujours là. Reprends là où tu en étais! 💪`
+                  : `⏱️ Ou te kite aplikasyon an pandan plis pase 3 minit. Timer a reyalize — men pa enkyete ou, konvèsasyon an la toujou. Kontinye kote ou te ye a! 💪`,
+              }])
+
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+
+        return
+      }
+
+      // Child came back within grace period
+      if (document.visibilityState === 'visible' && showGrace) {
+        clearInterval(graceIntervalRef.current)
+        setShowGrace(false)
+
+        // Update distraction record: returned within grace, no reset
+        if (distractionIdRef.current && leftAtRef.current && child) {
+          const returnedAt    = new Date()
+          const durationAway  = Math.floor((returnedAt.getTime() - leftAtRef.current.getTime()) / 1000)
+          supabase
+            .from('distractions')
+            .update({
+              returned_at:     returnedAt.toISOString(),
+              duration_away_s: durationAway,
+              timer_reset:     false,
+            })
+            .eq('id', distractionIdRef.current)
+            .then(() => { distractionIdRef.current = null })
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      clearInterval(graceIntervalRef.current)
+    }
+  }, [phase, sessionDone, child, lang, showGrace])
+
+  // Cleanup grace interval when session ends or phase changes
+  useEffect(() => {
+    return () => clearInterval(graceIntervalRef.current)
+  }, [])
+
   useEffect(() => { setTopic(null) }, [subject])
 
   const loadFlashcards = async () => {
@@ -546,11 +663,8 @@ export default function AskPage() {
   const creature    = child.pal?.creature || 'land'
   const palPalette  = child.pal?.palette || 'ocean'
 
-  // Get the curriculum object for this subject + grade
-  // child.grade may be undefined for new children — default to grade 5
   const grade         = (child.grade ?? 5) as GradeLevel
   const curriculumObj = getTopicsForGrade(subject, grade)
-  // subtopics is the array we iterate over
   const subtopics     = curriculumObj?.subtopics ?? []
 
   const startSession = () => {
@@ -567,6 +681,9 @@ export default function AskPage() {
     setShowBreak(false)
     setBreakShown(false)
     setPomodorosCompleted(0)
+    setShowGrace(false)
+    setGraceLeft(0)
+    clearInterval(graceIntervalRef.current)
     setPhase('chat')
   }
 
@@ -606,7 +723,6 @@ export default function AskPage() {
       })
       const data = await res.json()
 
-      // Handle session limit reached
       if (res.status === 429) {
         setMessages(m => [...m, {
           role: 'assistant',
@@ -670,6 +786,8 @@ export default function AskPage() {
     setPtsEarned(pts)
     setSessionDone(true)
     setSessionStart(null)
+    setShowGrace(false)
+    clearInterval(graceIntervalRef.current)
   }
 
   // ── SETUP ─────────────────────────────────────────────────────────
@@ -691,31 +809,24 @@ export default function AskPage() {
 
       <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* ── SUBJECT SELECTOR ── */}
+        {/* Subject selector */}
         <div>
           <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
             {t.subject}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {ALL_SUBJECTS.map(s => {
-              const cfg     = SUBJECT_CONFIG[s]
+              const cfg      = SUBJECT_CONFIG[s]
               const isActive = subject === s
               return (
                 <button key={s} onClick={() => setSubject(s)} style={{
-                  padding: '14px 16px',
-                  borderRadius: 16,
+                  padding: '14px 16px', borderRadius: 16,
                   background: isActive ? '#0B1F4B' : '#fff',
                   color:      isActive ? '#FBBF24' : '#64748B',
-                  fontWeight: 700,
-                  fontSize:   13,
-                  cursor:    'pointer',
+                  fontWeight: 700, fontSize: 13, cursor: 'pointer',
                   border:    `1.5px solid ${isActive ? '#0B1F4B' : '#E2E8F0'}`,
-                  fontFamily:'var(--font-jakarta)',
-                  transition:'all .15s',
-                  display:   'flex',
-                  alignItems:'center',
-                  gap:        10,
-                  textAlign: 'left',
+                  fontFamily:'var(--font-jakarta)', transition: 'all .15s',
+                  display:   'flex', alignItems: 'center', gap: 10, textAlign: 'left',
                 }}>
                   <span style={{ fontSize: 22, flexShrink: 0 }}>{cfg.emoji}</span>
                   <span style={{ lineHeight: 1.3 }}>{cfg.shortLabel}</span>
@@ -723,8 +834,6 @@ export default function AskPage() {
               )
             })}
           </div>
-
-          {/* Program label — shows the official QEP label for this grade */}
           {curriculumObj && (
             <p style={{ color: '#94A3B8', fontSize: 11, marginTop: 8, paddingLeft: 4 }}>
               Programme : {curriculumObj.programLabel}
@@ -732,7 +841,7 @@ export default function AskPage() {
           )}
         </div>
 
-        {/* ── TOPIC / CHAPTER SELECTOR ── */}
+        {/* Topic selector */}
         {subtopics.length > 0 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -742,9 +851,7 @@ export default function AskPage() {
               <span style={{ color: '#94A3B8', fontSize: 12 }}>{t.topicOptional}</span>
             </div>
             <p style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>{t.topicHint}</p>
-
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {/* General option */}
               <button onClick={() => setTopic(null)} style={{
                 padding: '7px 14px', borderRadius: 99,
                 background: topic === null ? '#0B1F4B' : '#fff',
@@ -755,8 +862,6 @@ export default function AskPage() {
               }}>
                 {t.topicGeneral}
               </button>
-
-              {/* One button per subtopic string */}
               {subtopics.map(tp => (
                 <button key={tp} onClick={() => setTopic(topic === tp ? null : tp)} style={{
                   padding: '7px 14px', borderRadius: 99,
@@ -770,7 +875,6 @@ export default function AskPage() {
                 </button>
               ))}
             </div>
-
             {topic && (
               <div style={{ marginTop: 10, background: '#F0F9FF', borderRadius: 12, padding: '10px 14px', border: '1px solid #BAE6FD' }}>
                 <p style={{ color: '#0369A1', fontSize: 12, fontWeight: 600 }}>
@@ -781,7 +885,7 @@ export default function AskPage() {
           </div>
         )}
 
-        {/* ── POMODORO TOGGLE ── */}
+        {/* Pomodoro toggle */}
         <div onClick={() => setPomodoroOn(p => !p)} style={{
           background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff',
           border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`,
@@ -809,7 +913,6 @@ export default function AskPage() {
           </div>
         )}
 
-        {/* ── FLASHCARDS BUTTON ── */}
         <button onClick={() => setPhase('flashcards')} style={{
           width: '100%', padding: '13px', background: '#fff',
           color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16,
@@ -905,17 +1008,52 @@ export default function AskPage() {
         />
       )}
 
+      {/* ── GRACE PERIOD BANNER ── */}
+      {showGrace && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, zIndex: 300,
+          background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+          padding: '12px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          animation: 'slideDown .3s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>⚠️</span>
+            <div>
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: 13, margin: 0 }}>
+                Tu as quitté l'application!
+              </p>
+              <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 11, margin: 0 }}>
+                Reviens maintenant — le timer repart dans {graceMins}:{graceSecs}
+              </p>
+            </div>
+          </div>
+          {/* Countdown ring */}
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            background: 'rgba(255,255,255,.15)',
+            border: '2px solid rgba(255,255,255,.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <p style={{ color: '#fff', fontWeight: 800, fontSize: 14, fontFamily: 'var(--font-fredoka)', margin: 0 }}>
+              {graceLeft}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+      <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)', marginTop: showGrace ? 72 : 0, transition: 'margin-top .3s' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => { setPhase('setup'); setMessages([]) }} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>←</button>
+          <button onClick={() => { setPhase('setup'); setMessages([]); setShowGrace(false); clearInterval(graceIntervalRef.current) }} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>←</button>
           <div style={{ animation: 'float 3s ease-in-out infinite', flexShrink: 0 }}>
             <PalSVG creature={creature} shape={child.pal?.bodyShape || 'round'} palette={palette} feature={child.pal?.feature || 'eyes'} size={38} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-fredoka)' }}>{palName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: showGrace ? '#EF4444' : '#22C55E', transition: 'background .3s' }} />
               <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>
                 {SUBJECT_CONFIG[subject].shortLabel}{topic ? ` · ${topic}` : ''} · {pomodoroOn ? `Pomodoro${pomodorosCompleted > 0 ? ` · ${pomodorosCompleted}✓` : ''}` : 'Libre'}
               </span>
@@ -1051,9 +1189,10 @@ export default function AskPage() {
       </div>
 
       <style>{`
-        @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes typing  { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
-        @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes typing   { 0%,60%,100%{transform:translateY(0);opacity:.3} 30%{transform:translateY(-5px);opacity:1} }
+        @keyframes slideUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideDown{ from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
     </div>
   )

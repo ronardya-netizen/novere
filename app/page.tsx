@@ -8,27 +8,26 @@ const COPY = {
     navLinks: ['Ce qu\'on offre', 'Comment ça marche', 'Notre mission', 'Tarifs'],
     navCta: 'Essayer →',
     badge: 'Montréal · Haïti · Grandir ensemble',
-    heroTitle: 'Le plaisir d\'apprendre\nen s\'amusant.',
-    heroSub: 'NOVERE accompagne les enfants avec une expérience de tutorat pensée pour la confiance, la curiosité et la progression. Grâce à un compagnon d\'apprentissage unique et à des mentors inspirants, l\'enfant avance à son rythme, dans un cadre rassurant et engageant.',
+    heroTitle: 'Construire des ponts\ngrâce à l\'éducation.',
+    heroSub: 'NOVERE accompagne les enfants du primaire et du secondaire avec un compagnon d\'apprentissage unique dans un cadre engageant qui récompense chaque effort.',
     ctaPrimary: 'Essayer gratuitement →',
     ctaSecondary: 'Voir comment ça marche',
-    trustLabel: 'Pilot en cours · Montréal, 2025',
-    featEyebrow: 'Le plaisir d\'apprendre en s\'amusant',
-    featTitle: 'Un outil de tutorat personnalisé conçu pour offrir une expérience basée sur des méthodes d\'étude efficaces et engageantes.',
+    featEyebrow: 'Ce qu\'on offre',
+    featTitle: 'Un outil de tutorat personnalisé, aligné sur le programme québécois, conçu pour que chaque enfant avance avec confiance.',
     feats: [
-      { icon: '🧠', title: 'Un compagnon qui lui ressemble', desc: 'Dès le départ, l\'enfant crée son propre compagnon d\'apprentissage. Ce repère familier rend chaque session plus engageante et soutient l\'habitude d\'apprendre.', tag: 'Personnalisé · Engageant' },
-      { icon: '🔮', title: 'Des modèles qui ouvrent des horizons', desc: 'Des étudiants et des professionnels montréalais partagent leur parcours lors de rencontres qui aident l\'enfant à se projeter et à imaginer des opportunités professionnelles.', tag: 'Inspirant · Supervisé' },
-      { icon: '🦸', title: 'Des apprentissages qui comptent vraiment', desc: 'NOVERE aborde des thèmes essentiels comme la finance personnelle, la santé mentale et la citoyenneté. L\'objectif est de soutenir la réussite scolaire tout en développant des repères utiles pour la vie.', tag: 'Essentiel · Quotidien' },
-      { icon: '🎁', title: 'Des progrès qu\'on peut voir', desc: 'Chaque séance contribue à une progression tangible. Les récompenses rendent les efforts visibles et encouragent à poursuivre.', tag: 'Motivant · Tangible' },
+      { icon: '🧠', title: 'Un compagnon d\'apprentissage qui lui ressemble', desc: 'Dès le départ, l\'enfant crée son propre compagnon d\'apprentissage qui l\'aide à appliquer des techniques d\'études efficaces qui développe la vraie compréhension.', tag: 'Personnalisé · Méthodes d\'apprentissage' },
+      { icon: '🎬', title: 'Des mentors qui ouvrent des horizons', desc: 'Des professionnels partagent leur journée en courtes vidéos animées. Médecin, entrepreneur, ingénieur — l\'enfant voit des carrières réelles et s\'y projette.', tag: 'Inspirant · Authentique' },
+      { icon: '🎯', title: 'Des quêtes de vie essentielles', desc: 'NOVERE aborde des thèmes comme les finances personnelles, la santé mentale et la citoyenneté. Des apprentissages que l\'école n\'enseigne pas toujours, mais dont chaque enfant a besoin.', tag: 'Essentiel · Quotidien' },
+      { icon: '🛍️', title: 'Des récompenses qui motivent vraiment', desc: 'Les points gagnés pendant les sessions se transforment en rabais sur des jouets et du merch NOVERE. Une récompense grandement méritée!', tag: 'Motivant · Tangible' },
     ],
     howEyebrow: 'Comment ça fonctionne',
     howTitle: 'Une mise en place simple, pour une habitude qui s\'installe naturellement.',
     howSub: 'En quelques minutes, tout est prêt : un compagnon personnalisé et une expérience pensée pour revenir chaque jour.',
     steps: [
-      { title: 'Créer le profil', desc: 'Le parent crée le compte, choisit la langue d\'apprentissage selon les besoins de l\'enfant, et définit les périodes d\'étude.' },
-      { title: 'Donner vie au compagnon', desc: 'L\'enfant personnalise son compagnon d\'apprentissage en quelques étapes simples.' },
-      { title: 'Apprendre un peu chaque jour', desc: 'Des séances courtes basées sur des méthodes d\'étude éprouvées permettent une progression efficace en mathématiques, en français et dans les autres matières du programme québécois.' },
-      { title: 'Voir les progrès', desc: 'Au fil du temps, les quêtes et les interactions adaptées au rythme de l\'enfant installent une routine durable. L\'enfant apprend tout en gagnant des points et des récompenses.' },
+      { title: 'Créer le profil', desc: 'Le parent crée le compte, choisit la langue, définit les horaires d\'étude et le niveau scolaire de l\'enfant.' },
+      { title: 'Donner vie au compagnon', desc: 'L\'enfant personnalise son compagnon de travail en quelques étapes — nom, apparence, univers. C\'est son repère.' },
+      { title: 'Étudier avec son compagnon', desc: 'Des sessions Pomodoro de 25 minutes avec son comagnong qui l\'aide à mieux comprendre et mémoriser les concepts — maths, français, histoire, sciences, alignés sur le programme QEP.' },
+      { title: 'Gagner et être récompensé', desc: 'Chaque Pomodoro complété = 50 points. Les points donnent des rabais sur la boutique NOVERE. Les parents voient les progrès en temps réel et sont encouragés à récompenser les efforts.' },
     ],
     missionEyebrow: 'Notre mission',
     missionTitle: 'Faire de l\'apprentissage un lien, ici et au-delà.',
@@ -39,24 +38,86 @@ const COPY = {
     kidsLabel: 'enfants parrainés',
     pricingEyebrow: 'Tarifs',
     pricingTitle: 'Des options simples pour commencer.',
-    pricingSub: 'Essai gratuit de 14 jours. Sans engagement. Annulable à tout moment.',
+    pricingSub: 'Commencez gratuitement. Sans engagement. Annulable à tout moment.',
+    pricingNote: 'Pourquoi les sessions sont-elles limitées sur le plan gratuit?',
+    pricingNoteBody: 'Le compagnon d\'apprentissage utilise une IA avancée pour répondre à chaque question de votre enfant — chaque réponse a un coût. Le plan gratuit offre 3 sessions de 25 minutes par jour (75 min d\'étude guidée). Les plans payants permettent des sessions illimitées pour que votre enfant ne soit jamais bloqué en plein devoir.',
     plans: [
-      { name: 'Découverte', price: 'Gratuit', period: 'Pour toujours · fonctions limitées', feats: ['Compagnon IA (5 sessions/mois)', 'Quêtes de vie (3/semaine)', 'Système de points basique'], cta: 'Commencer gratuitement', featured: false },
-      { name: 'Famille', price: '$9', cents: '.99', period: 'par mois · jusqu\'à 2 enfants', feats: ['Compagnon IA illimité + Pomodoro', 'Quêtes de vie quotidiennes + quiz', 'Flashcards automatiques', '1 mentor attitré par enfant', 'Points et cadeaux NOVERE', 'Portail parents + horaire d\'étude', 'Français + Créole haïtien'], cta: 'Démarrer l\'essai gratuit →', featured: true },
-      { name: 'École', price: 'Sur devis', period: 'Licence établissement scolaire', feats: ['Tout le plan Famille', 'Tableau de bord enseignant', 'Contenu aligné au programme QC', 'Support dédié'], cta: 'Nous contacter', featured: false },
+      {
+        name: 'Gratuit',
+        price: '0$',
+        period: 'Pour toujours',
+        description: 'Découvrez NOVERE sans engagement. Idéal pour tester la plateforme avant de s\'abonner.',
+        feats: [
+          { label: '1 enfant', included: true },
+          { label: '3 sessions Pomodoro par jour', included: true },
+          { label: 'Accès à Nova (IA Socratique)', included: true },
+          { label: 'Quêtes et articles éducatifs', included: true },
+          { label: 'Boutique et liste de souhaits', included: true },
+          { label: 'Accès aux vidéos Mentors', included: true },
+          { label: 'Portail parents de base', included: true },
+          { label: 'Sessions illimitées', included: false },
+          { label: 'Rapport hebdomadaire par courriel', included: false },
+          { label: 'Support prioritaire', included: false },
+        ],
+        cta: 'Commencer gratuitement',
+        ctaNote: 'Aucune carte de crédit requise',
+        featured: false,
+      },
+      {
+        name: 'Individuel',
+        price: '9,99$',
+        period: 'par mois · 1 enfant',
+        description: 'Tout inclus pour un enfant. Sessions illimitées et rapport hebdomadaire pour suivre les progrès.',
+        feats: [
+          { label: '1 enfant', included: true },
+          { label: 'Sessions Pomodoro illimitées', included: true },
+          { label: 'Accès complet à Nova (IA Socratique)', included: true },
+          { label: 'Quêtes et articles éducatifs', included: true },
+          { label: 'Boutique et liste de souhaits', included: true },
+          { label: 'Accès aux vidéos Mentors', included: true },
+          { label: 'Portail parents complet', included: true },
+          { label: 'Rapport hebdomadaire par courriel', included: true },
+          { label: 'Support prioritaire', included: true },
+          { label: 'Jusqu\'à 3 enfants', included: false },
+        ],
+        cta: 'Choisir Individuel →',
+        ctaNote: 'Annulez à tout moment',
+        featured: true,
+      },
+      {
+        name: 'Famille',
+        price: '19,99$',
+        period: 'par mois · jusqu\'à 3 enfants',
+        description: 'La meilleure valeur pour les familles. Chaque enfant a son propre compagnon, ses points et sa liste de souhaits.',
+        feats: [
+          { label: 'Jusqu\'à 3 enfants', included: true },
+          { label: 'Sessions Pomodoro illimitées', included: true },
+          { label: 'Accès complet à Nova (IA Socratique)', included: true },
+          { label: 'Quêtes et articles éducatifs', included: true },
+          { label: 'Boutique et liste de souhaits', included: true },
+          { label: 'Accès aux vidéos Mentors', included: true },
+          { label: 'Portail parents complet', included: true },
+          { label: 'Rapport hebdomadaire par courriel', included: true },
+          { label: 'Support prioritaire', included: true },
+          { label: 'Profil individuel par enfant', included: true },
+        ],
+        cta: 'Choisir Famille →',
+        ctaNote: 'Annulez à tout moment',
+        featured: false,
+      },
     ],
     finalTitle: 'Apprendre ensemble, avec plus de plaisir et plus de constance.',
-    finalSub: 'Découvrez comment NOVERE peut prendre sa place dans la routine de tutorat de votre enfant et contribuer à un impact plus large.',
+    finalSub: 'Rejoignez les premières familles qui utilisent NOVERE à Montréal et contribuez à un impact concret en Haïti.',
     finalCta: 'Essayer gratuitement →',
     finalCta2: 'Voir notre mission',
-    footerTagline: 'NOVERE — Le plaisir d\'apprendre en s\'amusant.',
+    footerTagline: 'Building bridges through education.',
     footerSig: 'Montréal · Haïti',
     footerCols: [
-      { title: 'Produit', links: ['Compagnon', 'Mentors', 'Leçons de vie', 'Récompenses'] },
+      { title: 'Produit', links: ['Compagnon IA', 'Mentors', 'Quêtes de vie', 'Boutique & Récompenses'] },
       { title: 'Compagnie', links: ['Notre mission', 'Impact Haïti', 'Blog', 'Carrières'] },
       { title: 'Support', links: ['FAQ', 'Nous contacter', 'Confidentialité', 'Conditions d\'utilisation'] },
     ],
-    copyright: '© 2025 NOVERE Inc. — Montréal, Québec.',
+    copyright: '© 2025 NOVERE — Montréal, Québec.',
     phoneBubble1: 'Si tu coupes une pizza en 4 parts égales et tu en prends 2, c\'est quelle fraction? 🍕',
     phoneBubble2: 'c\'est 2/4? 😅',
     phoneBubble3: 'Exactement! Et tu peux simplifier ça? 🤔',
@@ -65,73 +126,133 @@ const COPY = {
     phonePoints: '620 / 1000 pts',
     phonePointsSub: 'Prochain cadeau NOVERE',
     floatLeft: { label: '50 points gagnés', sub: 'Session Pomodoro · Maths' },
-    floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Médecine · McGill' },
+    floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Médecine · McGill University' },
   },
-  kr: {
-    navLinks: ['Sa nou ofri', 'Kijan sa mache', 'Misyon nou', 'Pri'],
-    navCta: 'Eseye →',
-    badge: 'Montréal · Ayiti · Grandi ansanm',
-    heroTitle: 'Aprann pandan\nwap amize w.',
-    heroSub: 'NOVERE akonpaye timoun yo ak yon eksperyans tutorat ki fèt pou konfyans, kiryozite ak pwogrè. Avèk yon konpayon aprantisaj inik ak konseye ki enspire, timoun nan avanse nan rit pa li, nan yon anviwònman ki ankouraje li.',
-    ctaPrimary: 'Eseye gratis →',
-    ctaSecondary: 'Gade kijan sa mache',
-    trustLabel: 'Pilot an kou · Montréal, 2025',
-    featEyebrow: 'Aprann',
-    featTitle: 'Yon zouti tutorat pèsonalize ki baze sou metòd etid ki efikas epi ki enteresan.',
-    feats: [
-      { icon: '🧠', title: 'Yon konpayon ki sanble avè l', desc: 'Depi nan kòmansman, timoun nan kreye pwòp konpayon aprantisaj li. Repè sa a fè chak sesyon pi enteresan epi ede devlope abitid aprann.', tag: 'Pèsonalize · Enteresan' },
-      { icon: '🔮', title: 'Modèl ki louvri orizon', desc: 'Etidyan ak pwofesyonèl montreyalè pataje chemen yo pandan rankont ki ede timoun nan imajine diferan posiblite pou lavni li.', tag: 'Enspiran · Sipèvize' },
-      { icon: '🦸', title: 'Aprantisaj ki vrèman enpòtan', desc: 'NOVERE abòde sijè esansyèl tankou finans pèsonèl, sante mantal ak sitwayènte. Objektif la se soutni reyisit lekòl pandan li devlope repè ki itil pou lavi.', tag: 'Esansyèl · Chak jou' },
-      { icon: '🎁', title: 'Pwogrè ou ka wè', desc: 'Chak sesyon pote yon pwogrè klè. Rekonpans yo fè efò yo vizib epi ankouraje timoun nan kontinye.', tag: 'Motivasyon · Konkrè' },
-    ],
-    howEyebrow: 'Kijan sa mache',
-    howTitle: 'Yon kòmansman senp, pou yon abitid ki vin enstale natirèlman.',
-    howSub: 'Nan kèk minit sèlman, tout bagay pare: yon konpayon pèsonalize ak yon eksperyans ki fèt pou timoun nan retounen ladan chak jou.',
-    steps: [
-      { title: 'Kreye pwofil la', desc: 'Paran an kreye kont lan, chwazi lang aprantisaj la selon bezwen timoun nan, epi fikse peryòd etid yo.' },
-      { title: 'Bay konpayon an lavi', desc: 'Timoun nan pèsonalize konpayon aprantisaj li an kèk etap senp.' },
-      { title: 'Aprann yon ti kras chak jou', desc: 'Sesyon kout ki baze sou metòd etid ki deja pwouve yo pèmèt timoun nan avanse nan matematik, franse ak lòt matyè nan pwogram kebekwa a.' },
-      { title: 'Wè pwogrè yo', desc: 'Avèk tan, kestyon, aktivite ak entèraksyon ki adapte ak rit timoun nan kreye yon abitid solid. Timoun nan aprann pandan li ranmase pwen ak rekonpans.' },
-    ],
-    missionEyebrow: 'Misyon nou',
-    missionTitle: 'Fè aprantisaj vin yon lyen, isit ak pi lwen.',
-    missionBody: 'NOVERE fèt ant Montréal ak Ayiti. Misyon li se ofri timoun isit yo yon eksperyans tutorat ki pi enteresan, pandan li kreye tou yon enpak konkrè pou lòt timoun lòt kote.',
-    missionBody2: 'Se poutèt sa 10% nan chak abònman ale bay òganizasyon verifye ki sipòte lekòl timoun ann Ayiti.',
-    missionStat: '10% nan chak abònman ale ann Ayiti.',
-    kidsGoal: 'Objektif : 100 timoun eskolarize avan fen 2026',
-    kidsLabel: 'timoun parène',
-    pricingEyebrow: 'Pri',
-    pricingTitle: 'Opsyon senp pou kòmanse.',
-    pricingSub: 'Eseye gratis pandan 14 jou. San angajman. Ou ka anile nenpòt ki lè.',
-    plans: [
-      { name: 'Dekouvèt', price: 'Gratis', period: 'Pou toujou · fonksyon limite', feats: ['Konpayon IA (5 sesyon/mwa)', 'Kestyon lavi (3/semèn)', 'Sistèm pwen debaz'], cta: 'Kòmanse gratis', featured: false },
-      { name: 'Fanmi', price: '$9', cents: '.99', period: 'pa mwa · jiska 2 timoun', feats: ['Konpayon IA san limit + Pomodoro', 'Kestyon lavi chak jou + quiz', 'Flashcard otomatik', '1 mentor pou chak timoun', 'Pwen ak kado NOVERE', 'Pòtay paran + orè etid', 'Franse + Kreyòl ayisyen'], cta: 'Kòmanse esè gratis →', featured: true },
-      { name: 'Lekòl', price: 'Sou demann', period: 'Lisans etablisman', feats: ['Tout plan Fanmi', 'Tablo pwofesè', 'Kontni aliyen ak pwogram QC', 'Sipò dedye'], cta: 'Kontakte nou', featured: false },
-    ],
-    finalTitle: 'Aprann ansanm, ak plis plezi ak plis regilarite.',
-    finalSub: 'Dekouvri kijan NOVERE ka pran plas li nan woutin tutorat pitit ou epi kontribye nan yon enpak ki pi laj.',
-    finalCta: 'Eseye gratis →',
-    finalCta2: 'Gade misyon nou',
-    footerTagline: 'NOVERE — Aprann pandan wap amize w.',
-    footerSig: 'Montréal · Ayiti',
-    footerCols: [
-      { title: 'Pwodwi', links: ['Konpayon', 'Mentor', 'Leson lavi', 'Rekonpans'] },
-      { title: 'Konpayi', links: ['Misyon nou', 'Enpak Ayiti', 'Blog', 'Karyè'] },
-      { title: 'Sipò', links: ['FAQ', 'Kontakte nou', 'Konfidansyalite', 'Kondisyon itilizasyon'] },
-    ],
-    copyright: '© 2025 NOVERE Inc. — Montréal, Québec.',
-    phoneBubble1: 'Si ou koupe yon pizza an 4 pati egal epi ou pran 2, ki fraksyon sa a? 🍕',
-    phoneBubble2: 'se 2/4? 😅',
-    phoneBubble3: 'Egzakteman! Epi ou ka senplifye sa? 🤔',
-    phonePal: 'Naruto · Konpayon ou',
-    phoneLang: 'Franse · Kreyòl',
-    phonePoints: '620 / 1000 pwen',
-    phonePointsSub: 'Pwochen kado NOVERE',
-    floatLeft: { label: '50 pwen ranmase', sub: 'Sesyon Pomodoro · Math' },
-    floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Medsin · McGill' },
-  },
+ kr: {
+  navLinks: ['Sa nou ofri', 'Kijan sa mache', 'Misyon nou', 'Pri'],
+  navCta: 'Eseye →',
+  badge: 'Montréal · Ayiti · Grandi ansanm',
+  heroTitle: 'Bati yon pon\ngras ak edikasyon.',
+  heroSub: 'NOVERE akonpaye timoun lekòl primè ak segondè ak yon konpayon aprantisaj inik nan yon anviwònman ki rekonpanse chak efò.',
+  ctaPrimary: 'Eseye gratis →',
+  ctaSecondary: 'Gade kijan sa mache',
+  featEyebrow: 'Sa nou ofri',
+  featTitle: 'Yon zouti aprantisaj pèsonalize, aliyen ak pwogram kebekwa a, nan lespri pou ede chak timoun avanse ak konfyans.',
+  feats: [
+    { icon: '🧠', title: 'Yon konpayon aprantisaj ki sanble avè l', desc: 'Depi nan kòmansman, timoun nan kreye pwòp konpayon aprantisaj li ki ede ap li aplike teknik etid efikas ki ede l devlope konpreyansyon li.', tag: 'Pèsonalize · Metòd aprantisaj' },
+    { icon: '🎬', title: 'Mentò ki louvri orizon', desc: 'Pwofesyonèl yo pataje jounen yo nan ti videyo anime. Doktè, antreprenè, enjenyè — timoun nan wè karyè reyèl epi imajine lavni li.', tag: 'Enspiran · Otantik' },
+    { icon: '🎯', title: 'Kesyon lavi ki esansyèl', desc: 'NOVERE abòde sijè tankou finans pèsonèl, sante mantal ak sitwayènte. Aprantisaj ke lekòl pa toujou ansèye, men tout timoun bezwen.', tag: 'Esansyèl · Chak jou' },
+    { icon: '🛍️', title: 'Rekonpans ki vrèman motive', desc: 'Pwen yo ranmase pandan sesyon yo vin tounen rabè sou jwèt ak atik NOVERE. Yon rekonpans ki vrèman merite!', tag: 'Motivasyon · Konkrè' },
+  ],
+  howEyebrow: 'Kijan sa mache',
+  howTitle: 'Yon kòmansman senp, pou yon abitid ki vin enstale natirèlman.',
+  howSub: 'Nan kèk minit sèlman, tout bagay pare: yon konpayon pèsonalize ak yon eksperyans ki fèt pou ankouraje timoun nan retounen chak jou.',
+  steps: [
+    { title: 'Kreye pwofil la', desc: 'Paran an kreye kont lan, chwazi lang lan, fikse orè etid yo ak nivo lekòl timoun nan.' },
+    { title: 'Bay konpayon an lavi', desc: 'Timoun nan pèsonalize konpayon travay li an kèk etap — non, aparans, inivè. Se repè pa li.' },
+    { title: 'Etidye ak konpayon li', desc: 'Sesyon Pomodoro 25 minit ak konpayon li ki ede l\' pi byen konprann epi memorize konsèp yo — matematik, Franse, istwa, syans, aliyen ak pwogram QEP.' },
+    { title: 'Ranmase rekonpans', desc: 'Chak Pomodoro li konplete = 50 pwen. Pwen yo bay rabè sou boutik NOVERE. Paran yo wè pwogrè yo an tan reyèl sa ki ankouraje yo rekonpanse efò yo.' },
+  ],
+  missionEyebrow: 'Misyon nou',
+  missionTitle: 'Fè aprantisaj vin yon lyen, isit ak pi lwen.',
+  missionBody: 'NOVERE fèt ant Montréal ak Ayiti. Misyon li se ofri timoun isit yo yon eksperyans tutorat ki pi enteresan, pandan li kreye tou yon enpak konkrè pou lòt timoun lòt kote.',
+  missionBody2: 'Se poutèt sa 10% nan chak abònman ale bay òganizasyon verifye ki sipòte lekòl timoun ann Ayiti.',
+  missionStat: '10% nan chak abònman ale ann Ayiti.',
+  kidsGoal: 'Objektif : Sipòte 100 timoun avan fen 2026',
+  kidsLabel: 'timoun parene',
+  pricingEyebrow: 'Pri',
+  pricingTitle: 'Opsyon senp pou kòmanse.',
+  pricingSub: 'Kòmanse gratis. San angajman. Ou ka anile nenpòt ki lè.',
+  pricingNote: 'Poukisa sesyon yo limite sou plan gratis la?',
+  pricingNoteBody: 'Konpayon aprantisaj la itilize yon IA avanse pou reponn chak kesyon timoun nan — chak repons gen yon pri. Plan gratis la ofri 3 sesyon 25 minit pa jou (75 minit etid gide). Plan peye yo pèmèt sesyon san limit pou timoun nan pa janm bloke nan mitan devwa.',
+  plans: [
+    {
+      name: 'Gratis',
+      price: '0$',
+      period: 'Pou toujou',
+      description: 'Dekouvri NOVERE san angajman. Idyal pou eseye platfòm nan anvan ou abòne.',
+      feats: [
+        { label: '1 timoun', included: true },
+        { label: '3 sesyon Pomodoro pa jou', included: true },
+        { label: 'Aksè a konpayon aprantisaj la', included: true },
+        { label: 'Kestyon ak atik edikasyon', included: true },
+        { label: 'Boutik ak lis dezire', included: true },
+        { label: 'Aksè a videyo Mentor', included: true },
+        { label: 'Pòtay paran debaz', included: true },
+        { label: 'Sesyon san limit', included: false },
+        { label: 'Rapò chak semèn pa imèl', included: false },
+        { label: 'Sipò priyoritè', included: false },
+      ],
+      cta: 'Kòmanse gratis',
+      ctaNote: 'Pa bezwen kat kredi',
+      featured: false,
+    },
+    {
+      name: 'Endividyèl',
+      price: '9,99$',
+      period: 'pa mwa · 1 timoun',
+      description: 'Tout enkli pou yon timoun. Sesyon san limit ak rapò chak semèn pou suiv pwogrè yo.',
+      feats: [
+        { label: '1 timoun', included: true },
+        { label: 'Sesyon Pomodoro san limit', included: true },
+        { label: 'Aksè konplè a konpayon aprantisaj la', included: true },
+        { label: 'Kestyon ak atik edikasyon', included: true },
+        { label: 'Boutik ak lis dezire', included: true },
+        { label: 'Aksè a videyo Mentor', included: true },
+        { label: 'Pòtay paran konplè', included: true },
+        { label: 'Rapò chak semèn pa imèl', included: true },
+        { label: 'Sipò priyoritè', included: true },
+        { label: 'Jiska 3 timoun', included: false },
+      ],
+      cta: 'Chwazi Endividyèl →',
+      ctaNote: 'Anile nenpòt ki lè',
+      featured: true,
+    },
+    {
+      name: 'Fanmi',
+      price: '19,99$',
+      period: 'pa mwa · jiska 3 timoun',
+      description: 'Pi bon valè pou fanmi yo. Chak timoun gen pwòp konpayon li, pwen li ak lis dezire pa li.',
+      feats: [
+        { label: 'Jiska 3 timoun', included: true },
+        { label: 'Sesyon Pomodoro san limit', included: true },
+        { label: 'Aksè konplè a konpayon aprantisaj la', included: true },
+        { label: 'Kestyon ak atik edikasyon', included: true },
+        { label: 'Boutik ak lis dezire', included: true },
+        { label: 'Aksè a videyo Mentor', included: true },
+        { label: 'Pòtay paran konplè', included: true },
+        { label: 'Rapò chak semèn pa imèl', included: true },
+        { label: 'Sipò priyoritè', included: true },
+        { label: 'Pwofil endividyèl pa timoun', included: true },
+      ],
+      cta: 'Chwazi Fanmi →',
+      ctaNote: 'Anile nenpòt ki lè',
+      featured: false,
+    },
+  ],
+  finalTitle: 'Aprann ansanm, ak plis plezi ak plis regilarite.',
+  finalSub: 'Rantre nan premye fanmi ki itilize NOVERE Montréal epi kontribye nan yon enpak konkrè ann Ayiti.',
+  finalCta: 'Eseye gratis →',
+  finalCta2: 'Gade misyon nou',
+  footerTagline: 'Bati pon gras ak edikasyon.',
+  footerSig: 'Montréal · Ayiti',
+  footerCols: [
+    { title: 'Pwodwi', links: ['Konpayon aprantisaj', 'Mentor', 'Kestyon lavi', 'Boutik & Rekonpans'] },
+    { title: 'Konpayi', links: ['Misyon nou', 'Enpak Ayiti', 'Blog', 'Karyè'] },
+    { title: 'Sipò', links: ['FAQ', 'Kontakte nou', 'Konfidansyalite', 'Kondisyon itilizasyon'] },
+  ],
+  copyright: '© 2025 NOVERE — Montréal, Québec.',
+  phoneBubble1: 'Si ou koupe yon pizza an 4 pati egal epi ou pran 2, ki fraksyon sa a? 🍕',
+  phoneBubble2: 'se 2/4? 😅',
+  phoneBubble3: 'Egzakteman! Epi ou ka senplifye sa? 🤔',
+  phonePal: 'Naruto · Konpayon ou',
+  phoneLang: 'Franse · Kreyòl',
+  phonePoints: '620 / 1000 pwen',
+  phonePointsSub: 'Pwochen kado NOVERE',
+  floatLeft: { label: '50 pwen ranmase', sub: 'Sesyon Pomodoro · Math' },
+  floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Medsin · McGill' },
+},
 }
-
 export default function Root() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
@@ -162,50 +283,22 @@ function LandingPage() {
     <>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        :root{--navy:#0B1F4B;--blue:#3B52D4;--sky:#DBEAFE;--yellow:#FBBF24;--white:#FFFFFF;--off:#F8FAFF;--text:#1E293B;--muted:#64748B}
+        :root{--navy:#0B1F4B;--blue:#3B52D4;--sky:#DBEAFE;--yellow:#FBBF24;--white:#FFFFFF;--off:#F8FAFF;--text:#1E293B;--muted:#64748B;--green:#16A34A;--green-bg:#DCFCE7;--red:#EF4444;--red-bg:#FEE2E2}
         html{scroll-behavior:smooth;font-family:'Plus Jakarta Sans',sans-serif}
         body{background:var(--off);color:var(--text);overflow-x:hidden}
 
-        /* ── NAV ── */
-        nav{
-          position:sticky;top:0;z-index:100;
-          background:rgba(11,31,75,0.97);
-          backdrop-filter:blur(12px);
-          display:flex;align-items:center;justify-content:space-between;
-          padding:0 4%;height:64px;
-          border-bottom:2px solid rgba(251,191,36,0.25);
-          gap:8px;
-        }
-        .logo{
-          font-family:'Fredoka',sans-serif;
-          font-size:1.6rem;font-weight:700;color:#fff;
-          display:flex;align-items:center;gap:8px;
-          text-decoration:none;flex-shrink:0;
-        }
+        nav{position:sticky;top:0;z-index:100;background:rgba(11,31,75,0.97);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 4%;height:64px;border-bottom:2px solid rgba(251,191,36,0.25);gap:8px}
+        .logo{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
         .logo img{width:32px;height:32px;object-fit:contain}
         .nav-links{display:flex;gap:24px;list-style:none;flex:1;justify-content:center}
         .nav-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.85rem;font-weight:500;transition:color .2s;white-space:nowrap}
         .nav-links a:hover{color:var(--yellow)}
         .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-        .lang-pill{
-          background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);
-          border:1px solid rgba(255,255,255,0.2);border-radius:99px;
-          padding:4px 10px;font-size:0.72rem;font-weight:700;
-          cursor:pointer;transition:all .2s;
-          font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;
-        }
+        .lang-pill{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:4px 10px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
         .lang-pill:hover,.lang-pill.active{background:rgba(251,191,36,0.2);color:var(--yellow);border-color:rgba(251,191,36,0.5)}
-        .btn-nav{
-          background:var(--yellow);color:var(--navy);
-          border:none;border-radius:99px;
-          padding:7px 14px;font-weight:700;font-size:0.82rem;
-          cursor:pointer;transition:transform .15s,box-shadow .15s;
-          font-family:'Plus Jakarta Sans',sans-serif;
-          white-space:nowrap;flex-shrink:0;
-        }
+        .btn-nav{background:var(--yellow);color:var(--navy);border:none;border-radius:99px;padding:7px 14px;font-weight:700;font-size:0.82rem;cursor:pointer;transition:transform .15s,box-shadow .15s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;flex-shrink:0}
         .btn-nav:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,191,36,0.45)}
 
-        /* ── HERO ── */
         .hero{background:linear-gradient(135deg,var(--navy) 0%,#0D2860 60%,#1a1060 100%);min-height:92vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:80px 5% 60px;position:relative;overflow:hidden}
         .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 70% 50%,rgba(59,82,212,0.25) 0%,transparent 70%);pointer-events:none}
         .hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,0.06) 1px,transparent 1px);background-size:32px 32px}
@@ -227,7 +320,6 @@ function LandingPage() {
         .trust-text{color:rgba(255,255,255,0.6);font-size:0.85rem}
         .trust-text strong{color:#fff}
 
-        /* ── PHONE MOCKUP ── */
         .hero-visual{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;animation:fadeUp .7s .2s ease both}
         .phone-frame{width:270px;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:32px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)}
         .phone-status{background:rgba(0,0,0,0.3);padding:10px 18px 6px;display:flex;justify-content:space-between;align-items:center}
@@ -240,36 +332,10 @@ function LandingPage() {
         .chat-header-text p{color:#fff;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .chat-header-text span{color:rgba(255,255,255,0.4);font-size:0.6rem}
         .online-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0}
-        .bubble{
-          padding:8px 12px;border-radius:14px;
-          font-size:0.7rem;line-height:1.45;
-          word-wrap:break-word;word-break:break-word;
-          max-width:82%;
-        }
-        .bubble-ai{
-          background:rgba(59,82,212,0.35);
-          border:1px solid rgba(59,82,212,0.3);
-          color:rgba(255,255,255,0.9);
-          border-bottom-left-radius:3px;
-          align-self:flex-start;
-          margin-right:auto;
-        }
-        .bubble-user{
-          background:var(--yellow);
-          color:var(--navy);
-          font-weight:600;
-          border-bottom-right-radius:3px;
-          align-self:flex-end;
-          margin-left:auto;
-        }
-        .bubble-typing{
-          display:flex;gap:4px;align-items:center;
-          padding:10px 14px;
-          align-self:flex-start;
-          background:rgba(59,82,212,0.35);
-          border:1px solid rgba(59,82,212,0.3);
-          border-radius:14px;border-bottom-left-radius:3px;
-        }
+        .bubble{padding:8px 12px;border-radius:14px;font-size:0.7rem;line-height:1.45;word-wrap:break-word;word-break:break-word;max-width:82%}
+        .bubble-ai{background:rgba(59,82,212,0.35);border:1px solid rgba(59,82,212,0.3);color:rgba(255,255,255,0.9);border-bottom-left-radius:3px;align-self:flex-start;margin-right:auto}
+        .bubble-user{background:var(--yellow);color:var(--navy);font-weight:600;border-bottom-right-radius:3px;align-self:flex-end;margin-left:auto}
+        .bubble-typing{display:flex;gap:4px;align-items:center;padding:10px 14px;align-self:flex-start;background:rgba(59,82,212,0.35);border:1px solid rgba(59,82,212,0.3);border-radius:14px;border-bottom-left-radius:3px}
         .bubble-typing span{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.4);animation:typing 1.2s infinite}
         .bubble-typing span:nth-child(2){animation-delay:.2s}
         .bubble-typing span:nth-child(3){animation-delay:.4s}
@@ -286,7 +352,6 @@ function LandingPage() {
         .float-text p{color:#fff;font-size:0.7rem;font-weight:600;white-space:nowrap}
         .float-text span{color:rgba(255,255,255,0.45);font-size:0.6rem}
 
-        /* ── SECTIONS ── */
         section{padding:96px 5%}
         .section-label{display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:16px}
         .section-label::before{content:'';display:block;width:16px;height:2px;background:var(--blue)}
@@ -336,25 +401,40 @@ function LandingPage() {
         .mission-stat strong{font-family:'Fredoka',sans-serif;font-size:3rem;font-weight:700;color:var(--navy)}
         .mission-stat span{font-size:0.85rem;color:rgba(11,31,75,0.6);font-weight:600}
 
+        /* ── NEW PRICING ── */
         .pricing{background:#fff}
-        .pricing-grid{display:flex;gap:24px;margin-top:56px;justify-content:center;flex-wrap:wrap}
-        .plan{border:2px solid #E2E8F0;border-radius:28px;padding:40px 36px;flex:1;min-width:260px;max-width:340px;transition:transform .2s}
-        .plan:hover{transform:translateY(-4px)}
-        .plan.featured{background:var(--navy);border-color:var(--navy);position:relative}
-        .plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow);color:var(--navy);font-size:0.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 18px;border-radius:99px;white-space:nowrap}
-        .plan-name{font-family:'Fredoka',sans-serif;font-size:1.2rem;margin-bottom:8px;color:var(--navy)}
-        .plan.featured .plan-name{color:#fff}
-        .plan-price{font-family:'Fredoka',sans-serif;font-size:3rem;font-weight:700;line-height:1;margin-bottom:6px;color:var(--navy)}
-        .plan.featured .plan-price{color:var(--yellow)}
-        .plan-period{font-size:0.82rem;color:var(--muted);margin-bottom:28px}
-        .plan.featured .plan-period{color:rgba(255,255,255,0.45)}
-        .plan-feats{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
-        .plan-feats li{display:flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--text)}
-        .plan.featured .plan-feats li{color:rgba(255,255,255,0.8)}
-        .check{color:#22c55e;font-size:1rem;flex-shrink:0}
-        .btn-plan{width:100%;padding:14px;border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:all .2s;border:2px solid #E2E8F0;background:var(--off);color:var(--navy)}
-        .plan.featured .btn-plan{background:var(--yellow);color:var(--navy);border:none}
-        .plan.featured .btn-plan:hover{box-shadow:0 8px 24px rgba(251,191,36,0.4)}
+        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px;align-items:start}
+        .plan-card{border:2px solid #E2E8F0;border-radius:24px;padding:32px 28px;position:relative;transition:transform .2s,box-shadow .2s;background:#fff}
+        .plan-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(11,31,75,0.1)}
+        .plan-card.featured{background:var(--navy);border-color:var(--navy)}
+        .plan-popular{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--yellow);color:var(--navy);font-size:0.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 18px;border-radius:99px;white-space:nowrap}
+        .plan-name{font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+        .plan-card.featured .plan-name{color:#fff}
+        .plan-price{font-family:'Fredoka',sans-serif;font-size:2.4rem;font-weight:700;color:var(--navy);line-height:1;margin-bottom:4px}
+        .plan-card.featured .plan-price{color:var(--yellow)}
+        .plan-period{font-size:0.82rem;color:var(--muted);margin-bottom:12px}
+        .plan-card.featured .plan-period{color:rgba(255,255,255,0.45)}
+        .plan-desc{font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:20px;min-height:52px}
+        .plan-card.featured .plan-desc{color:rgba(255,255,255,0.6)}
+        .plan-divider{height:1px;background:#E2E8F0;margin-bottom:18px}
+        .plan-card.featured .plan-divider{background:rgba(255,255,255,0.1)}
+        .plan-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+        .plan-feat-item{display:flex;align-items:center;gap:10px;font-size:0.87rem}
+        .plan-feat-item.included{color:var(--text)}
+        .plan-feat-item.excluded{color:var(--muted);text-decoration:line-through}
+        .plan-card.featured .plan-feat-item.included{color:rgba(255,255,255,0.88)}
+        .plan-card.featured .plan-feat-item.excluded{color:rgba(255,255,255,0.28)}
+        .feat-icon-check{width:20px;height:20px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;font-weight:800;color:var(--green)}
+        .feat-icon-dash{width:20px;height:20px;border-radius:50%;background:var(--red-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.85rem;font-weight:800;color:var(--red);line-height:1}
+        .plan-cta{width:100%;padding:13px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:all .2s;margin-bottom:8px;border:2px solid #E2E8F0;background:var(--off);color:var(--navy)}
+        .plan-card.featured .plan-cta{background:var(--yellow);color:var(--navy);border:none}
+        .plan-card.featured .plan-cta:hover{box-shadow:0 8px 24px rgba(251,191,36,0.4)}
+        .plan-cta-note{font-size:0.78rem;color:var(--muted);text-align:center}
+        .plan-card.featured .plan-cta-note{color:rgba(255,255,255,0.35)}
+        .pricing-note{margin-top:32px;background:var(--off);border:1.5px solid #E2E8F0;border-radius:16px;padding:20px 24px;display:flex;gap:14px;align-items:flex-start}
+        .pricing-note-icon{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+        .pricing-note-text p{color:var(--navy);font-weight:700;font-size:0.9rem;margin-bottom:6px}
+        .pricing-note-text span{color:var(--muted);font-size:0.85rem;line-height:1.65}
 
         .final-cta{background:linear-gradient(135deg,var(--navy),#13306B);padding:96px 5%;text-align:center}
         .final-cta h2{font-family:'Fredoka',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;color:#fff;margin-bottom:16px;line-height:1.2}
@@ -375,6 +455,7 @@ function LandingPage() {
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         @keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 
+        @media(max-width:1000px){.pricing-grid{grid-template-columns:1fr}}
         @media(max-width:900px){
           .hero{grid-template-columns:1fr;text-align:center}
           .hero p{margin:0 auto 36px}
@@ -429,7 +510,6 @@ function LandingPage() {
           </div>
           <div className="hero-trust">
             <div className="trust-avatars"><span>👩</span><span>👨</span><span>👩🏾</span></div>
-            <p className="trust-text"><strong>{c.trustLabel}</strong></p>
           </div>
         </div>
 
@@ -439,7 +519,6 @@ function LandingPage() {
               <div style={{ fontSize:'1.3rem' }}>⭐</div>
               <div className="float-text"><p>{c.floatLeft.label}</p><span>{c.floatLeft.sub}</span></div>
             </div>
-
             <div className="phone-frame">
               <div className="phone-status">
                 <span>9:41</span><div className="phone-notch" /><span>●●●</span>
@@ -467,9 +546,8 @@ function LandingPage() {
                 <div className="points-bar-wrap"><div className="points-bar" /></div>
               </div>
             </div>
-
             <div className="float-card right">
-              <div style={{ fontSize:'1.3rem' }}>🔮</div>
+              <div style={{ fontSize:'1.3rem' }}>🎬</div>
               <div className="float-text"><p>{c.floatRight.label}</p><span>{c.floatRight.sub}</span></div>
             </div>
           </div>
@@ -544,29 +622,44 @@ function LandingPage() {
         <div className="section-label">{c.pricingEyebrow}</div>
         <h2 className="section-title">{c.pricingTitle}</h2>
         <p className="section-sub">{c.pricingSub}</p>
+
         <div className="pricing-grid">
           {c.plans.map((plan, i) => (
-            <div key={i} className={`plan${plan.featured?' featured':''}`}>
-              {plan.featured && <div className="plan-badge">⭐ Le plus populaire</div>}
+            <div key={i} className={`plan-card${plan.featured?' featured':''}`}>
+              {plan.featured && <div className="plan-popular">⭐ Le plus populaire</div>}
               <div className="plan-name">{plan.name}</div>
-              <div className="plan-price">
-                {plan.cents
-                  ? <>{plan.price}<span style={{ fontSize:'1.2rem', color: plan.featured ? 'rgba(255,255,255,0.5)' : 'var(--muted)' }}>{plan.cents}</span></>
-                  : plan.price
-                }
-              </div>
+              <div className="plan-price">{plan.price}</div>
               <div className="plan-period">{plan.period}</div>
+              <div className="plan-desc">{plan.description}</div>
+              <div className="plan-divider" />
               <ul className="plan-feats">
-                {plan.feats.map((f, j) => <li key={j}><span className="check">✓</span>{f}</li>)}
+                {plan.feats.map((f, j) => (
+                  <li key={j} className={`plan-feat-item ${f.included?'included':'excluded'}`}>
+                    {f.included
+                      ? <div className="feat-icon-check">✓</div>
+                      : <div className="feat-icon-dash">–</div>}
+                    {f.label}
+                  </li>
+                ))}
               </ul>
               <button
-                className="btn-plan"
-                onClick={() => plan.cta.toLowerCase().includes('contact') || plan.cta.toLowerCase().includes('contac') ? null : router.push('/auth')}
+                className="plan-cta"
+                onClick={() => router.push(plan.featured || plan.name === 'Famille' || plan.name === 'Fanmi' ? '/pricing' : '/auth')}
               >
                 {plan.cta}
               </button>
+              <p className="plan-cta-note">{plan.ctaNote}</p>
             </div>
           ))}
+        </div>
+
+        {/* Why sessions are limited */}
+        <div className="pricing-note">
+          <div className="pricing-note-icon">💡</div>
+          <div className="pricing-note-text">
+            <p>{c.pricingNote}</p>
+            <span>{c.pricingNoteBody}</span>
+          </div>
         </div>
       </section>
 
@@ -608,4 +701,3 @@ function LandingPage() {
     </>
   )
 }
-

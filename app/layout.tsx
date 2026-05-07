@@ -16,10 +16,11 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'NOVERE — Apprends. Rêve. Donne.',
-  description: "Le compagnon d'apprentissage des enfants de Montréal",
+  title: 'Novere',
+  description: "Une plateforme d\'apprentissage personalisable qui permet de gagner des cadeaux en apprenant.",
   icons: {
     icon: '/novere_logo.png',
+    shortcut: '/novere_logo.png',
     apple: '/novere_logo.png',
   },
 }

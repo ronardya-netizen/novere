@@ -58,10 +58,10 @@ export default function VerifyPage() {
           {/* Steps */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28, textAlign: 'left' }}>
             {[
-              { n: '1', text: 'Ouvre ton application de courriel' },
-              { n: '2', text: 'Cherche un message de NOVERE' },
-              { n: '3', text: 'Clique sur le lien de vérification' },
-              { n: '4', text: 'Crée le profil de ton enfant' },
+              { n: '1', text: 'Ouvrez votre application de courriel' },
+              { n: '2', text: 'Cherchez un message de Novere' },
+              { n: '3', text: 'Cliquez sur le lien de vérification' },
+              { n: '4', text: 'Créez le profil de votre enfant' },
             ].map(step => (
               <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(251,191,36,.15)', border: '1px solid rgba(251,191,36,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

@@ -46,12 +46,11 @@ export default function AuthPage() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <img src="/novere_logo.png" alt="NOVERE" style={{ width: 72, height: 72, objectFit: 'contain', marginBottom: 16 }} />
           <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
-            NOVÈRE
+            NOVERE
           </h1>
           <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>
-            {mode === 'signup' ? 'Crée ton compte parent' : 'Bienvenue de retour'}
+            {mode === 'signup' ? 'Créez votre compte parent' : 'Content de vous revoir'}
           </p>
         </div>
 

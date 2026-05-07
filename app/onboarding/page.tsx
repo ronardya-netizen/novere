@@ -249,43 +249,43 @@ export default function OnboardingPage() {
       }}>
 
         {/* STEP 0 */}
-        {step === 0 && (
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:72, marginBottom:8, display:'inline-block', animation:'float 3s ease-in-out infinite' }}>😊</div>
-            <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>NOVERE</h1>
-            <p style={{ color:'rgba(255,255,255,.55)', fontSize:16, lineHeight:1.7, maxWidth:380, margin:'0 auto 12px' }}>
-              Un univers où les enfants curieux partent en aventures d'apprentissage.
-            </p>
-            <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>Chaque explorateur a besoin d'un compagnon.</p>
-            <div style={{ background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:24, padding:28, marginBottom:24, textAlign:'left' }}>
-              <p style={{ color:'rgba(255,255,255,.5)', fontSize:13, fontWeight:700, marginBottom:16, textTransform:'uppercase', letterSpacing:'.06em' }}>
-                Parlez-nous de votre enfant
-              </p>
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                <input
-                  placeholder="Prénom de l'enfant"
-                  value={childName}
-                  onChange={e => setChildName(e.target.value)}
-                  style={inputStyle}
-                />
-                <select value={grade} onChange={e => setGrade(+e.target.value)} style={inputStyle}>
-                  {[1,2,3,4,5,6].map(g => (
-                    <option key={g} value={g} style={{ background:'#0B1F4B' }}>
-                      {g === 1 ? '1ère' : `${g}ème`} année du primaire
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <button
-              onClick={() => childName.trim() && goTo(1)}
-              disabled={!childName.trim()}
-              style={{ ...btnStyle, background: childName.trim() ? '#FBBF24' : 'rgba(255,255,255,.1)', color: childName.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)', fontSize:16, padding:'16px 48px' }}
-            >
-              Commencer l'aventure ✦
-            </button>
-          </div>
-        )}
+{step === 0 && (
+  <div style={{ textAlign:'center' }}>
+    <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>NOVERE</h1>
+    <p style={{ color:'rgba(255,255,255,.55)', fontSize:16, lineHeight:1.7, maxWidth:380, margin:'0 auto 12px' }}>
+      Prêt(e) pour l'aventure?.
+    </p>
+    <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>Chaque explorateur a besoin d'un compagnon.</p>
+    <div style={{ background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:24, padding:28, marginBottom:24, textAlign:'left' }}>
+      <p style={{ color:'rgba(255,255,255,.5)', fontSize:13, fontWeight:700, marginBottom:16, textTransform:'uppercase', letterSpacing:'.06em' }}>
+        Parlez-nous de votre enfant
+      </p>
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        <input
+          placeholder="Prénom de l'enfant"
+          value={childName}
+          onChange={e => setChildName(e.target.value)}
+          style={inputStyle}
+        />
+        <select value={grade} onChange={e => setGrade(+e.target.value)} style={inputStyle}>
+          {[1,2,3,4,5,6].map(g => (
+            <option key={g} value={g} style={{ background:'#0B1F4B' }}>
+              {g === 1 ? '1ère' : `${g}ème`} année du primaire
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+    <button
+      onClick={() => childName.trim() && goTo(1)}
+      disabled={!childName.trim()}
+      style={{ ...btnStyle, background: childName.trim() ? '#FBBF24' : 'rgba(255,255,255,.1)', color: childName.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)', fontSize:16, padding:'16px 48px' }}
+    >
+      Commencer l'aventure ✦
+    </button>
+  </div>
+)}
+
 
         {/* STEP 1 */}
         {step === 1 && (

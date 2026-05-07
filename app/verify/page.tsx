@@ -31,12 +31,10 @@ export default function VerifyPage() {
     }}>
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
 
-        {/* Logo */}
-        <img src="/novere_logo.png" alt="NOVERE" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 20 }} />
-
+      
         {/* Welcome heading */}
         <h1 style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 34, fontWeight: 700, marginBottom: 10 }}>
-          Bienvenue sur NOVERE! 🎉
+          Bienvenue à NOVERE! 🎉
         </h1>
         <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>
           Votre compte a été créé avec succès. Merci de vérifier votre email avant de poursuivre.

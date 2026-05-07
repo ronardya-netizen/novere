@@ -74,6 +74,8 @@ export default function HomePage() {
   const [greeting, setGreeting]     = useState('')
   const [animIn, setAnimIn]         = useState(false)
   const [isWide, setIsWide]         = useState(false)
+  const [sessionsToday, setSessionsToday] = useState(0)
+  const [parentPlan,    setParentPlan]    = useState('free')
 
   useEffect(() => {
     const check = () => setIsWide(window.innerWidth >= 768)
@@ -117,11 +119,20 @@ useEffect(() => {
     })
 
 
-  // Articles
-  supabase.from('news_articles')
+    // Articles
+    supabase.from('news_articles')
     .select('id, title, subject, hero, hero_name')
     .eq('published', true).limit(3)
     .then(({ data }: any) => { if (data) setArticles(data) })
+    // Sessions today + parent plan
+    supabase.from('children').select('sessions_today').eq('id', child.id).single()
+    .then(({ data }: any) => { if (data) setSessionsToday(data.sessions_today ?? 0) })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) return
+    supabase.from('profiles').select('plan').eq('id', user.id).single()
+    .then(({ data }: any) => { if (data) setParentPlan(data.plan ?? 'free') })
+    })
+
 
   // Streak — based on parent schedule + completed Pomodoros
   const computeStreak = async () => {
@@ -201,11 +212,10 @@ useEffect(() => {
 
 
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1F4B' }}>
-      <img src="/novere_logo.png" style={{ width: 64, height: 64, objectFit: 'contain', animation: 'pulse 1.5s ease-in-out infinite' }} />
-    </div>
-  )
+ if (loading) return (
+<div style={{ minHeight: '100vh', background: '#0B1F4B' }} />
+)
+
   if (!child) return null
 
   const palette   = PALETTES[child.pal?.palette || 'ocean']

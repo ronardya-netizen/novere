@@ -16,7 +16,7 @@ const COPY = {
     featTitle: 'Un outil de tutorat personnalisé, aligné sur le programme québécois, conçu pour que chaque enfant avance avec confiance.',
     feats: [
       { icon: '🧠', title: 'Un compagnon d\'apprentissage qui lui ressemble', desc: 'Dès le départ, l\'enfant crée son propre compagnon d\'apprentissage qui l\'aide à appliquer des techniques d\'études efficaces qui développe la vraie compréhension.', tag: 'Personnalisé · Méthodes d\'apprentissage' },
-      { icon: '🎬', title: 'Des mentors qui ouvrent des horizons', desc: 'Des professionnels partagent leur journée en courtes vidéos animées. Médecin, entrepreneur, ingénieur — l\'enfant voit des carrières réelles et s\'y projette.', tag: 'Inspirant · Authentique' },
+      { icon: '🎬', title: 'Des mentors qui ouvrent des horizons', desc: 'Des professionnels partagent leur journée en courtes vidéos animées. Médecin, entrepreneur, ingénieur. l\'enfant voit des carrières réelles et s\'y projette.', tag: 'Inspirant · Authentique' },
       { icon: '🎯', title: 'Des quêtes de vie essentielles', desc: 'Novere aborde des thèmes comme les finances personnelles, la santé mentale et la citoyenneté. Des apprentissages que l\'école n\'enseigne pas toujours, mais dont chaque enfant a besoin.', tag: 'Essentiel · Quotidien' },
       { icon: '🛍️', title: 'Des récompenses qui motivent vraiment', desc: 'Les points gagnés pendant les sessions se transforment en rabais sur des jouets et du merch NOVERE. Une récompense grandement méritée!', tag: 'Motivant · Tangible' },
     ],
@@ -25,8 +25,8 @@ const COPY = {
     howSub: 'En quelques minutes, tout est prêt : un compagnon personnalisé et une expérience pensée pour revenir chaque jour.',
     steps: [
       { title: 'Créer le profil', desc: 'Le parent crée le compte, choisit la langue, définit les horaires d\'étude et le niveau scolaire de l\'enfant.' },
-      { title: 'Donner vie au compagnon', desc: 'L\'enfant personnalise son compagnon de travail en quelques étapes — nom, apparence, univers. C\'est son repère.' },
-      { title: 'Étudier avec son compagnon', desc: 'Des sessions Pomodoro de 25 minutes avec son comagnong qui l\'aide à mieux comprendre et mémoriser les concepts — maths, français, histoire, sciences, alignés sur le programme QEP.' },
+      { title: 'Donner vie au compagnon', desc: 'L\'enfant personnalise son compagnon de travail en quelques étapes (nom, apparence, univers). C\'est son repère.' },
+      { title: 'Étudier avec son compagnon', desc: 'Des sessions Pomodoro de 25 minutes avec son comagnong qui l\'aide à mieux comprendre et mémoriser les concepts en maths, français, histoire et sciences, alignés sur le programme QEP.' },
       { title: 'Gagner et être récompensé', desc: 'Chaque Pomodoro complété = 50 points. Les points donnent des rabais sur la boutique NOVERE. Les parents voient les progrès en temps réel et sont encouragés à récompenser les efforts.' },
     ],
     missionEyebrow: 'Notre mission',
@@ -40,7 +40,7 @@ const COPY = {
     pricingTitle: 'Des options simples pour commencer.',
     pricingSub: 'Commencez gratuitement. Sans engagement. Annulable à tout moment.',
     pricingNote: 'Pourquoi les sessions sont-elles limitées sur le plan gratuit?',
-    pricingNoteBody: 'Le compagnon d\'apprentissage utilise une IA avancée pour répondre à chaque question de votre enfant — chaque réponse a un coût. Le plan gratuit offre 3 sessions de 25 minutes par jour (75 min d\'étude guidée). Les plans payants permettent des sessions illimitées pour que votre enfant ne soit jamais bloqué en plein devoir.',
+    pricingNoteBody: 'Le compagnon d\'apprentissage utilise une IA avancée pour répondre à chaque question de votre enfant. Chaque réponse a un coût. Le plan gratuit offre 3 sessions de 25 minutes par jour (75 min d\'étude guidée). Les plans payants permettent des sessions illimitées pour que votre enfant ne soit jamais bloqué en plein devoir.',
     plans: [
       {
         name: 'Gratuit',
@@ -107,7 +107,7 @@ const COPY = {
       },
     ],
     finalTitle: 'Apprendre ensemble, avec plus de plaisir et plus de constance.',
-    finalSub: 'Rejoignez les premières familles qui utilisent NOVERE à Montréal et contribuez à un impact concret en Haïti.',
+    finalSub: 'Rejoignez les premières familles qui utilisent Novere à Montréal et contribuez à un impact concret en Haïti.',
     finalCta: 'Essayer gratuitement →',
     finalCta2: 'Voir notre mission',
     footerTagline: 'Building bridges through education.',
@@ -124,7 +124,7 @@ const COPY = {
     phonePal: 'Naruto · Ton compagnon',
     phoneLang: 'Français · Kreyòl',
     phonePoints: '620 / 1000 pts',
-    phonePointsSub: 'Prochain cadeau NOVERE',
+    phonePointsSub: 'Prochain cadeau Novere',
     floatLeft: { label: '50 points gagnés', sub: 'Session Pomodoro · Maths' },
     floatRight: { label: 'Mentor · Dr. Fabiola', sub: 'Médecine · McGill University' },
   },
@@ -140,7 +140,7 @@ const COPY = {
   featTitle: 'Yon zouti aprantisaj pèsonalize, aliyen ak pwogram kebekwa a, nan lespri pou ede chak timoun avanse ak konfyans.',
   feats: [
     { icon: '🧠', title: 'Yon konpayon aprantisaj ki sanble avè l', desc: 'Depi nan kòmansman, timoun nan kreye pwòp konpayon aprantisaj li ki ede ap li aplike teknik etid efikas ki ede l devlope konpreyansyon li.', tag: 'Pèsonalize · Metòd aprantisaj' },
-    { icon: '🎬', title: 'Mentò ki louvri orizon', desc: 'Pwofesyonèl yo pataje jounen yo nan ti videyo anime. Doktè, antreprenè, enjenyè — timoun nan wè karyè reyèl epi imajine lavni li.', tag: 'Enspiran · Otantik' },
+    { icon: '🎬', title: 'Mentò ki louvri orizon', desc: 'Pwofesyonèl yo pataje jounen yo nan ti videyo anime. Doktè, antreprenè, enjenyè. Timoun nan wè karyè reyèl epi imajine lavni li.', tag: 'Enspiran · Otantik' },
     { icon: '🎯', title: 'Kesyon lavi ki esansyèl', desc: 'NOVERE abòde sijè tankou finans pèsonèl, sante mantal ak sitwayènte. Aprantisaj ke lekòl pa toujou ansèye, men tout timoun bezwen.', tag: 'Esansyèl · Chak jou' },
     { icon: '🛍️', title: 'Rekonpans ki vrèman motive', desc: 'Pwen yo ranmase pandan sesyon yo vin tounen rabè sou jwèt ak atik Novere. Yon rekonpans ki vrèman merite!', tag: 'Motivasyon · Konkrè' },
   ],
@@ -149,8 +149,8 @@ const COPY = {
   howSub: 'Nan kèk minit sèlman, tout bagay pare: yon konpayon pèsonalize ak yon eksperyans ki fèt pou ankouraje timoun nan retounen chak jou.',
   steps: [
     { title: 'Kreye pwofil la', desc: 'Paran an kreye kont lan, chwazi lang lan, fikse orè etid yo ak nivo lekòl timoun nan.' },
-    { title: 'Bay konpayon an lavi', desc: 'Timoun nan pèsonalize konpayon travay li an kèk etap — non, aparans, inivè. Se repè pa li.' },
-    { title: 'Etidye ak konpayon li', desc: 'Sesyon Pomodoro 25 minit ak konpayon li ki ede l\' pi byen konprann epi memorize konsèp yo — matematik, Franse, istwa, syans, aliyen ak pwogram QEP.' },
+    { title: 'Bay konpayon an lavi', desc: 'Timoun nan pèsonalize konpayon travay li an kèk etap (non, aparans, inivè. Se repè pa li).' },
+    { title: 'Etidye ak konpayon li', desc: 'Sesyon Pomodoro 25 minit ak konpayon li ki ede l\' pi byen konprann epi memorize konsèp matematik, Franse, istwa ak syans, ki aliyen ak pwogram QEP.' },
     { title: 'Ranmase rekonpans', desc: 'Chak Pomodoro li konplete = 50 pwen. Pwen yo bay rabè sou boutik Novere. Paran yo wè pwogrè yo an tan reyèl sa ki ankouraje yo rekonpanse efò yo.' },
   ],
   missionEyebrow: 'Misyon nou',
@@ -164,7 +164,7 @@ const COPY = {
   pricingTitle: 'Opsyon senp pou kòmanse.',
   pricingSub: 'Kòmanse gratis. San angajman. Ou ka anile nenpòt ki lè.',
   pricingNote: 'Poukisa sesyon yo limite sou plan gratis la?',
-  pricingNoteBody: 'Konpayon aprantisaj la itilize yon IA avanse pou reponn chak kesyon timoun nan — chak repons gen yon pri. Plan gratis la ofri 3 sesyon 25 minit pa jou (75 minit etid gide). Plan peye yo pèmèt sesyon san limit pou timoun nan pa janm bloke nan mitan devwa.',
+  pricingNoteBody: 'Konpayon aprantisaj la itilize yon IA avanse pou reponn chak kesyon timoun nan. Chak repons gen yon pri. Plan gratis la ofri 3 sesyon 25 minit pa jou (75 minit etid gide). Plan peye yo pèmèt sesyon san limit pou timoun nan pa janm bloke nan mitan devwa.',
   plans: [
     {
       name: 'Gratis',

@@ -18,7 +18,11 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Novere',
   description: "Une plateforme d\'apprentissage personalisable qui permet de gagner des cadeaux en apprenant.",
-
+    icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 }
 
 export default function RootLayout({

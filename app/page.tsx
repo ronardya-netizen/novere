@@ -40,7 +40,7 @@ const COPY = {
     pricingTitle: 'Des options simples pour commencer.',
     pricingSub: 'Commencez gratuitement. Sans engagement. Annulable à tout moment.',
     pricingNote: 'Pourquoi les sessions sont-elles limitées sur le plan gratuit?',
-    pricingNoteBody: 'Le compagnon d\'apprentissage utilise une IA avancée pour répondre à chaque question de votre enfant. Chaque réponse a un coût. Le plan gratuit offre 3 sessions de 25 minutes par jour (75 min d\'étude guidée). Les plans payants permettent des sessions illimitées pour que votre enfant ne soit jamais bloqué en plein devoir.',
+    pricingNoteBody: 'Le compagnon d\'apprentissage utilise une IA avancée pour répondre à chaque question de votre enfant. Chaque réponse a un coût. Le plan gratuit offre 1 sessions d\'étude guidée de 25 minutes par jour. Les plans payants permettent des sessions illimitées pour que votre enfant ne soit jamais bloqué en plein devoir.',
     plans: [
       {
         name: 'Gratuit',

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useChild } from '@/lib/ChildContext'
 
+
 const CREATURE_TYPES = [
   { id: 'land',   label: 'Terrestre', icon: '🐾', desc: 'Ancré et courageux'    },
   { id: 'sea',    label: 'Marin',     icon: '🌊', desc: 'Profond et mystérieux'  },
@@ -11,12 +12,14 @@ const CREATURE_TYPES = [
   { id: 'cosmic', label: 'Cosmique',  icon: '✨', desc: 'Rare et lumineux'       },
 ]
 
+
 const BODY_SHAPES = [
   { id: 'round',  label: 'Petit & rond',       shape: 'M50,20 C75,20 85,40 85,55 C85,75 70,85 50,85 C30,85 15,75 15,55 C15,40 25,20 50,20Z' },
   { id: 'tall',   label: 'Grand & élancé',     shape: 'M50,10 C65,10 75,25 75,40 L75,75 C75,85 65,90 50,90 C35,90 25,85 25,75 L25,40 C25,25 35,10 50,10Z' },
   { id: 'sturdy', label: 'Large & solide',     shape: 'M20,25 C20,15 35,10 50,10 C65,10 80,15 80,25 L85,70 C85,82 70,88 50,88 C30,88 15,82 15,70Z' },
   { id: 'wispy',  label: 'Mystérieux & léger', shape: 'M50,15 C62,15 72,25 74,38 C80,42 84,50 82,60 C78,75 65,85 50,85 C35,85 22,75 18,60 C16,50 20,42 26,38 C28,25 38,15 50,15Z' },
 ]
+
 
 const PALETTES = [
   { id: 'ocean',   name: 'Océan',   main: '#2563EB', accent: '#7DD3FC', glow: 'rgba(37,99,235,.4)'   },
@@ -29,6 +32,7 @@ const PALETTES = [
   { id: 'night',   name: 'Nuit',    main: '#1E293B', accent: '#C7D2FE', glow: 'rgba(30,41,59,.4)'    },
 ]
 
+
 const FEATURES = [
   { id: 'ears',    label: 'Grandes oreilles', icon: '👂' },
   { id: 'eyes',    label: 'Yeux lumineux',    icon: '👁️' },
@@ -38,6 +42,7 @@ const FEATURES = [
   { id: 'antenna', label: 'Antennes',         icon: '📡' },
 ]
 
+
 const PERSONALITIES = [
   { id: 'brave',   label: 'Courageux', icon: '⚡', color: '#EA580C', desc: 'Toujours prêt à relever un défi',       greeting: "Je suis prêt pour l'aventure! Allons explorer quelque chose d'incroyable ensemble." },
   { id: 'curious', label: 'Curieux',   icon: '🔍', color: '#2563EB', desc: 'Pose toujours les meilleures questions', greeting: "Oh! Il y a tellement de choses à découvrir! Par où commence-t-on?" },
@@ -45,10 +50,39 @@ const PERSONALITIES = [
   { id: 'calm',    label: 'Calme',     icon: '🌊', color: '#16A34A', desc: 'Patient et toujours là pour toi',       greeting: "Prends une grande respiration. Je suis là, on va apprendre à notre propre rythme." },
 ]
 
+
+// All 7 days including weekend
+const ALL_DAYS = [
+  { id: 'Lun', label: 'Lundi',    short: 'L' },
+  { id: 'Mar', label: 'Mardi',    short: 'M' },
+  { id: 'Mer', label: 'Mercredi', short: 'M' },
+  { id: 'Jeu', label: 'Jeudi',    short: 'J' },
+  { id: 'Ven', label: 'Vendredi', short: 'V' },
+  { id: 'Sam', label: 'Samedi',   short: 'S' },
+  { id: 'Dim', label: 'Dimanche', short: 'D' },
+]
+
+
+const TIME_OPTIONS = [
+  '07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+  '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
+  '17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00',
+]
+
+
+function formatTime(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  const h12  = h > 12 ? h - 12 : h === 0 ? 12 : h
+  return `${h12}:${m.toString().padStart(2,'0')} ${ampm}`
+}
+
+
 function PalSVG({ creature, shape, palette, feature, size = 200 }: {
   creature: string; shape: string; palette: typeof PALETTES[0]; feature: string; size?: number
 }) {
   const bodyShape = BODY_SHAPES.find(b => b.id === shape)?.shape || BODY_SHAPES[0].shape
+
 
   const featureEl = () => {
     switch (feature) {
@@ -94,6 +128,7 @@ function PalSVG({ creature, shape, palette, feature, size = 200 }: {
     }
   }
 
+
   const creatureEl = () => {
     switch (creature) {
       case 'sea':    return <path d="M20,88 Q35,80 50,88 Q65,80 80,88" stroke={palette.accent} strokeWidth="3" fill="none" strokeLinecap="round" />
@@ -109,6 +144,7 @@ function PalSVG({ creature, shape, palette, feature, size = 200 }: {
       default: return null
     }
   }
+
 
   return (
     <svg viewBox="0 0 100 100" width={size} height={size}
@@ -137,9 +173,11 @@ function PalSVG({ creature, shape, palette, feature, size = 200 }: {
   )
 }
 
+
 export default function OnboardingPage() {
   const router              = useRouter()
   const { child, loading, refresh } = useChild()
+
 
   const [step, setStep]               = useState(0)
   const [childName, setChildName]     = useState('')
@@ -154,36 +192,54 @@ export default function OnboardingPage() {
   const [speaking, setSpeaking]       = useState(false)
   const [animIn, setAnimIn]           = useState(true)
 
-  // ── GUARD: if child already exists, skip onboarding ──────────────
+
+  // Schedule state
+  const [scheduleDays,      setScheduleDays]      = useState<string[]>(['Lun','Mar','Mer','Jeu','Ven'])
+  const [scheduleStartTime, setScheduleStartTime] = useState('16:00')
+  const [scheduleEndTime,   setScheduleEndTime]   = useState('18:00')
+
+
   useEffect(() => {
-    if (!loading && child) {
-      router.push('/home')
-    }
+    if (!loading && child) router.push('/home')
   }, [loading, child])
+
 
   const palette = PALETTES.find(p => p.id === paletteId) || PALETTES[0]
   const pers    = PERSONALITIES.find(p => p.id === personality) || PERSONALITIES[1]
+
 
   const goTo = (n: number) => {
     setAnimIn(false)
     setTimeout(() => { setStep(n); setAnimIn(true) }, 200)
   }
 
+
   useEffect(() => {
     if (step === 4 && palName) {
       const t = setTimeout(() => setSpeaking(true), 800)
       return () => clearTimeout(t)
     }
+    setSpeaking(false)
   }, [step, palName])
+
+
+  const toggleDay = (dayId: string) => {
+    setScheduleDays(prev =>
+      prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
+    )
+  }
+
 
   const finish = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
 
+
     const palData = { creature, bodyShape, palette: paletteId, feature, name: palName }
 
-    const { error } = await supabase.from('children').insert({
+
+    const { data: childData, error } = await supabase.from('children').insert({
       parent_id:   user.id,
       name:        childName,
       grade,
@@ -191,31 +247,48 @@ export default function OnboardingPage() {
       hero_name:   palName,
       pal:         palData,
       personality,
-    })
+    }).select().single()
 
-    if (!error) {
-      try {
-        await Promise.race([
-          refresh(),
-          new Promise(resolve => setTimeout(resolve, 3000))
-        ])
-      } catch (e) {
-        console.log('refresh error', e)
-      }
-      router.push('/home')
-    } else {
+
+    if (error || !childData) {
       console.error('Insert error:', error)
       setSaving(false)
+      return
     }
+
+
+    // Save schedule
+    await supabase.from('focus_schedules').insert({
+      child_id:   childData.id,
+      days:       scheduleDays,
+      start_time: scheduleStartTime,
+      end_time:   scheduleEndTime,
+      active:     true,
+    })
+
+
+    try {
+      await Promise.race([
+        refresh(),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ])
+    } catch (e) {
+      console.log('refresh error', e)
+    }
+    router.push('/home')
   }
 
-  // Show nothing while checking for existing child
+
   if (loading) return (
     <div style={{ minHeight:'100vh', background:'#0B1F4B', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ width:40, height:40, borderRadius:'50%', border:'3px solid rgba(255,255,255,.1)', borderTopColor:'#FBBF24', animation:'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
+
+
+  const TOTAL_STEPS = 5
+
 
   return (
     <div style={{
@@ -226,20 +299,24 @@ export default function OnboardingPage() {
       fontFamily: 'var(--font-jakarta)', overflowX: 'hidden',
       position: 'relative',
     }}>
+      {/* Background glows */}
       <div style={{ position:'fixed', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(37,99,235,.15) 0%, transparent 70%)', top:'10%', right:'5%', pointerEvents:'none' }} />
       <div style={{ position:'fixed', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(251,191,36,.08) 0%, transparent 70%)', bottom:'15%', left:'8%', pointerEvents:'none' }} />
       <div style={{ position:'fixed', width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(124,58,237,.1) 0%, transparent 70%)', top:'50%', left:'2%', pointerEvents:'none' }} />
 
-      {step > 0 && step < 5 && (
+
+      {/* Progress bar */}
+      {step > 0 && step < TOTAL_STEPS + 1 && (
         <div style={{ position:'fixed', top:0, left:0, right:0, height:4, background:'rgba(255,255,255,.1)', zIndex:100 }}>
-          <div style={{ height:'100%', width:`${(step/4)*100}%`, background:palette.main, transition:'width .4s ease', borderRadius:'0 99px 99px 0' }} />
+          <div style={{ height:'100%', width:`${(step/TOTAL_STEPS)*100}%`, background:palette.main, transition:'width .4s ease', borderRadius:'0 99px 99px 0' }} />
         </div>
       )}
-      {step > 0 && step < 5 && (
+      {step > 0 && step < TOTAL_STEPS + 1 && (
         <div style={{ position:'fixed', top:20, right:24, color:'rgba(255,255,255,.3)', fontSize:13, fontWeight:700 }}>
-          {step} / 4
+          {step} / {TOTAL_STEPS}
         </div>
       )}
+
 
       <div style={{
         width:'100%', maxWidth:520,
@@ -248,46 +325,47 @@ export default function OnboardingPage() {
         transition: 'all .25s ease',
       }}>
 
-        {/* STEP 0 */}
-{step === 0 && (
-  <div style={{ textAlign:'center' }}>
-    <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>NOVERE</h1>
-    <p style={{ color:'rgba(255,255,255,.55)', fontSize:16, lineHeight:1.7, maxWidth:380, margin:'0 auto 12px' }}>
-      Prêt(e) pour l'aventure?.
-    </p>
-    <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>Chaque explorateur a besoin d'un compagnon.</p>
-    <div style={{ background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:24, padding:28, marginBottom:24, textAlign:'left' }}>
-      <p style={{ color:'rgba(255,255,255,.5)', fontSize:13, fontWeight:700, marginBottom:16, textTransform:'uppercase', letterSpacing:'.06em' }}>
-        Parlez-nous de votre enfant
-      </p>
-      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        <input
-          placeholder="Prénom de l'enfant"
-          value={childName}
-          onChange={e => setChildName(e.target.value)}
-          style={inputStyle}
-        />
-        <select value={grade} onChange={e => setGrade(+e.target.value)} style={inputStyle}>
-          {[1,2,3,4,5,6].map(g => (
-            <option key={g} value={g} style={{ background:'#0B1F4B' }}>
-              {g === 1 ? '1ère' : `${g}ème`} année du primaire
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-    <button
-      onClick={() => childName.trim() && goTo(1)}
-      disabled={!childName.trim()}
-      style={{ ...btnStyle, background: childName.trim() ? '#FBBF24' : 'rgba(255,255,255,.1)', color: childName.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)', fontSize:16, padding:'16px 48px' }}
-    >
-      Commencer l'aventure ✦
-    </button>
-  </div>
-)}
+
+        {/* ── STEP 0 — child info ── */}
+        {step === 0 && (
+          <div style={{ textAlign:'center' }}>
+            <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:48, fontWeight:700, marginBottom:16, letterSpacing:2 }}>NOVERE</h1>
+            <p style={{ color:'rgba(255,255,255,.55)', fontSize:16, lineHeight:1.7, maxWidth:380, margin:'0 auto 12px' }}>
+              Prêt(e) pour l'aventure?
+            </p>
+            <p style={{ color:'rgba(255,255,255,.3)', fontSize:14, marginBottom:48 }}>Chaque explorateur a besoin d'un compagnon.</p>
+            <div style={{ background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:24, padding:28, marginBottom:24, textAlign:'left' }}>
+              <p style={{ color:'rgba(255,255,255,.5)', fontSize:13, fontWeight:700, marginBottom:16, textTransform:'uppercase', letterSpacing:'.06em' }}>
+                Parlez-nous de votre enfant
+              </p>
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                <input
+                  placeholder="Prénom de l'enfant"
+                  value={childName}
+                  onChange={e => setChildName(e.target.value)}
+                  style={inputStyle}
+                />
+                <select value={grade} onChange={e => setGrade(+e.target.value)} style={inputStyle}>
+                  {[3,4,5,6,7,8,9,10,11].map(g => (
+                    <option key={g} value={g} style={{ background:'#0B1F4B' }}>
+                      {g <= 6 ? `${g}e année du primaire` : `Secondaire ${g - 6}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={() => childName.trim() && goTo(1)}
+              disabled={!childName.trim()}
+              style={{ ...btnStyle, background: childName.trim() ? '#FBBF24' : 'rgba(255,255,255,.1)', color: childName.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)', fontSize:16, padding:'16px 48px' }}
+            >
+              Commencer l'aventure ✦
+            </button>
+          </div>
+        )}
 
 
-        {/* STEP 1 */}
+        {/* ── STEP 1 — intro ── */}
         {step === 1 && (
           <div style={{ textAlign:'center' }}>
             <p style={{ color:'rgba(255,255,255,.4)', fontSize:14, marginBottom:20 }}>Bonjour, {childName} 👋</p>
@@ -314,7 +392,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* STEP 2 */}
+
+        {/* ── STEP 2 — build ── */}
         {step === 2 && (
           <div>
             <h2 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:30, textAlign:'center', marginBottom:8 }}>Construis ton compagnon</h2>
@@ -322,6 +401,9 @@ export default function OnboardingPage() {
             <div style={{ display:'flex', justifyContent:'center', marginBottom:32, animation:'float 3s ease-in-out infinite' }}>
               <PalSVG creature={creature} shape={bodyShape} palette={palette} feature={feature} size={140} />
             </div>
+
+
+            {/* Creature type */}
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Type de créature</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
@@ -336,6 +418,9 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
+
+
+            {/* Body shape */}
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Forme du corps</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
@@ -347,6 +432,9 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
+
+
+            {/* Palette */}
             <div style={{ marginBottom:24 }}>
               <p style={sectionLabel}>Palette de couleurs</p>
               <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
@@ -355,6 +443,9 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
+
+
+            {/* Feature */}
             <div style={{ marginBottom:32 }}>
               <p style={sectionLabel}>Trait distinctif</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
@@ -366,13 +457,16 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
+
+
             <button onClick={() => goTo(3)} style={{ ...btnStyle, background:'#FBBF24', color:'#0B1F4B', width:'100%', fontSize:15 }}>
               Presque fini! →
             </button>
           </div>
         )}
 
-        {/* STEP 3 */}
+
+        {/* ── STEP 3 — personality + name ── */}
         {step === 3 && (
           <div>
             <h2 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:30, textAlign:'center', marginBottom:8 }}>Quelle est sa personnalité?</h2>
@@ -419,7 +513,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* STEP 4 */}
+
+        {/* ── STEP 4 — reveal ── */}
         {step === 4 && (
           <div style={{ textAlign:'center' }}>
             <p style={{ color:'rgba(255,255,255,.4)', fontSize:14, marginBottom:24 }}>{childName}, rencontre...</p>
@@ -438,9 +533,111 @@ export default function OnboardingPage() {
               <p style={{ color:'rgba(255,255,255,.85)', fontSize:16, lineHeight:1.7, fontStyle:'italic' }}>"{pers.greeting}"</p>
             </div>
             <button
+              onClick={() => goTo(5)}
+              style={{ ...btnStyle, background:'#FBBF24', color:'#0B1F4B', fontSize:16, padding:'16px 48px' }}
+            >
+              Choisir mon horaire →
+            </button>
+          </div>
+        )}
+
+
+        {/* ── STEP 5 — schedule ── */}
+        {step === 5 && (
+          <div>
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'float 3s ease-in-out infinite' }}>
+              <PalSVG creature={creature} shape={bodyShape} palette={palette} feature={feature} size={100} />
+            </div>
+            <h2 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:30, textAlign:'center', marginBottom:8 }}>
+              Quand veux-tu étudier avec {palName}?
+            </h2>
+            <p style={{ color:'rgba(255,255,255,.4)', textAlign:'center', fontSize:14, marginBottom:32 }}>
+              C'est toi qui choisis — {palName} sera là!
+            </p>
+
+
+            {/* Day picker */}
+            <div style={{ marginBottom:28 }}>
+              <p style={sectionLabel}>Tes jours d'étude</p>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:8 }}>
+                {ALL_DAYS.map(day => {
+                  const selected = scheduleDays.includes(day.id)
+                  return (
+                    <button
+                      key={day.id}
+                      onClick={() => toggleDay(day.id)}
+                      style={{
+                        display:'flex', flexDirection:'column', alignItems:'center', gap:4,
+                        padding:'10px 4px', borderRadius:14, cursor:'pointer', transition:'all .15s',
+                        background: selected ? palette.main : 'rgba(255,255,255,.05)',
+                        border:`1.5px solid ${selected ? palette.accent : 'rgba(255,255,255,.1)'}`,
+                        boxShadow: selected ? `0 4px 12px ${palette.glow}` : 'none',
+                      }}
+                    >
+                      <span style={{ color: selected ? '#fff' : 'rgba(255,255,255,.4)', fontWeight:800, fontSize:12 }}>
+                        {day.short}
+                      </span>
+                      <span style={{ color: selected ? palette.accent : 'rgba(255,255,255,.3)', fontSize:9, fontWeight:600 }}>
+                        {day.label.slice(0,3)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              {scheduleDays.length === 0 && (
+                <p style={{ color:'rgba(251,191,36,.7)', fontSize:12, textAlign:'center', marginTop:10 }}>
+                  Choisis au moins un jour! 😊
+                </p>
+              )}
+            </div>
+
+
+            {/* Time picker */}
+            <div style={{ marginBottom:28 }}>
+              <p style={sectionLabel}>Ton heure d'étude</p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div>
+                  <p style={{ color:'rgba(255,255,255,.4)', fontSize:11, fontWeight:600, marginBottom:8 }}>Je commence à</p>
+                  <select
+                    value={scheduleStartTime}
+                    onChange={e => setScheduleStartTime(e.target.value)}
+                    style={{ ...inputStyle, textAlign:'center', fontFamily:'var(--font-fredoka)', fontSize:16, cursor:'pointer' }}
+                  >
+                    {TIME_OPTIONS.map(t => <option key={t} value={t} style={{ background:'#0B1F4B' }}>{formatTime(t)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <p style={{ color:'rgba(255,255,255,.4)', fontSize:11, fontWeight:600, marginBottom:8 }}>Je termine à</p>
+                  <select
+                    value={scheduleEndTime}
+                    onChange={e => setScheduleEndTime(e.target.value)}
+                    style={{ ...inputStyle, textAlign:'center', fontFamily:'var(--font-fredoka)', fontSize:16, cursor:'pointer' }}
+                  >
+                    {TIME_OPTIONS.filter(t => t > scheduleStartTime).map(t => <option key={t} value={t} style={{ background:'#0B1F4B' }}>{formatTime(t)}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+
+            {/* Summary */}
+            {scheduleDays.length > 0 && (
+              <div style={{ background:`rgba(${palette.main.replace('#','').match(/.{2}/g)?.map(h=>parseInt(h,16)).join(',')}, .15)`, border:`1px solid ${palette.main}44`, borderRadius:16, padding:'14px 18px', marginBottom:28 }}>
+                <p style={{ color:palette.accent, fontWeight:700, fontSize:13, margin:'0 0 4px' }}>
+                  {palName} t'attendra 📚
+                </p>
+                <p style={{ color:'rgba(255,255,255,.6)', fontSize:12, margin:0, lineHeight:1.6 }}>
+                  {scheduleDays.map(d => ALL_DAYS.find(x => x.id === d)?.label).join(', ')}
+                  {' · '}{formatTime(scheduleStartTime)} à {formatTime(scheduleEndTime)}
+                </p>
+              </div>
+            )}
+
+
+            <button
               onClick={finish}
-              disabled={saving}
-              style={{ ...btnStyle, background: saving ? 'rgba(255,255,255,.1)' : '#FBBF24', color: saving ? 'rgba(255,255,255,.3)' : '#0B1F4B', fontSize:16, padding:'16px 48px' }}
+              disabled={saving || scheduleDays.length === 0}
+              style={{ ...btnStyle, background: saving || scheduleDays.length === 0 ? 'rgba(255,255,255,.1)' : '#FBBF24', color: saving || scheduleDays.length === 0 ? 'rgba(255,255,255,.3)' : '#0B1F4B', fontSize:16, padding:'16px 48px', width:'100%' }}
             >
               {saving ? 'Sauvegarde...' : "C'est parti! 🚀"}
             </button>
@@ -448,12 +645,14 @@ export default function OnboardingPage() {
         )}
       </div>
 
+
       <style>{`
         @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
       `}</style>
     </div>
   )
 }
+
 
 const inputStyle: React.CSSProperties = {
   width:'100%', padding:'13px 16px',
@@ -478,4 +677,3 @@ const sectionLabel: React.CSSProperties = {
   fontWeight:700, letterSpacing:'.08em',
   textTransform:'uppercase', marginBottom:10,
 }
-

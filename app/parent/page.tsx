@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 
 
-// ── Types ────────────────────────────────────
 type Product = {
   id: string; name: string; price_cad: number
   image_url: string | null; category: string
@@ -472,23 +471,22 @@ export default function ParentPage() {
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
               <div>
                 <p style={{ color:C.navy, fontWeight:800, fontSize:18, margin:0, fontFamily:'var(--font-fredoka)' }}>
-                  {currentPlan === 'individual' ? 'Plan Individuel' : currentPlan === 'family' ? 'Plan Famille' : 'Plan Gratuit'}
+                  {currentPlan === 'monthly' ? 'Plan Mensuel' : currentPlan === 'annual' ? 'Plan Annuel' : 'Plan Gratuit'}
                 </p>
                 <p style={{ color:C.faint, fontSize:12, margin:'4px 0 0' }}>
-                  {currentPlan === 'individual' ? 'Facturation mensuelle · 9,99 CAD/mois' : currentPlan === 'family' ? 'Facturation mensuelle · 19,99 CAD/mois' : 'Accès gratuit · sessions limitées'}
+                  {currentPlan === 'monthly' ? 'Facturation mensuelle · 4,99 CAD/mois' : currentPlan === 'annual' ? 'Facturation annuelle · 39,99 CAD/an' : 'Accès gratuit · 1 session/jour'}
                 </p>
               </div>
-              <span style={{ background: currentPlan === 'individual' ? C.goldDim : currentPlan === 'family' ? C.greenBg : '#F3F4F6', color: currentPlan === 'individual' ? C.navy : currentPlan === 'family' ? C.green : C.muted, fontSize:11, fontWeight:700, borderRadius:99, padding:'5px 12px', flexShrink:0 }}>
-                {currentPlan === 'individual' ? 'Individuel' : currentPlan === 'family' ? 'Famille' : 'Gratuit'}
+              <span style={{ background: currentPlan === 'monthly' ? C.goldDim : currentPlan === 'annual' ? C.greenBg : '#F3F4F6', color: currentPlan === 'monthly' ? C.navy : currentPlan === 'annual' ? C.green : C.muted, fontSize:11, fontWeight:700, borderRadius:99, padding:'5px 12px', flexShrink:0 }}>
+                {currentPlan === 'monthly' ? 'Mensuel' : currentPlan === 'annual' ? 'Annuel' : 'Gratuit'}
               </span>
             </div>
             <div style={{ marginBottom:16 }}>
               {[
-                { label:'1 enfant', included: true },
-                { label:'Sessions Pomodoro illimitées', included: currentPlan === 'individual' || currentPlan === 'family' },
-                { label:'Rapport hebdomadaire par courriel', included: currentPlan === 'individual' || currentPlan === 'family' },
-                { label:'Support prioritaire', included: currentPlan === 'individual' || currentPlan === 'family' },
-                { label:"Jusqu'à 3 enfants", included: currentPlan === 'family' },
+                { label:'1 enfant',                          included: true },
+                { label:'Sessions Pomodoro illimitées',      included: currentPlan === 'monthly' || currentPlan === 'annual' },
+                { label:'Rapport hebdomadaire par courriel', included: currentPlan === 'monthly' || currentPlan === 'annual' },
+                { label:'Support prioritaire',               included: currentPlan === 'monthly' || currentPlan === 'annual' },
               ].map((f, i) => (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
                   <div style={{ width:18, height:18, borderRadius:'50%', background:f.included?C.greenBg:C.redBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -500,7 +498,7 @@ export default function ParentPage() {
             </div>
             {(currentPlan === 'free' || currentPlan === 'user') ? (
               <button onClick={() => window.location.href = '/pricing'} style={{ width:'100%', background:C.navy, border:'none', borderRadius:10, padding:'12px 0', color:C.gold, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}>
-                Passer au plan Individuel ou Famille →
+                Passer au plan Mensuel ou Annuel →
               </button>
             ) : (
               <div style={{ display:'flex', gap:10 }}>

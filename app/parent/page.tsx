@@ -206,6 +206,9 @@ export default function ParentPage() {
   const [notifs,      setNotifs]      = useState({ weeklyReport:true, tierReached:true, wishlistAdded:false })
   const [pomoDur,     setPomoDur]     = useState(25)
   const [breakDur,    setBreakDur]    = useState(5)
+  const [childForm, setChildForm] = useState({ name: '', grade: 3 })
+  const [childFormReady, setChildFormReady] = useState(false)
+
 
 
   useEffect(() => { loadAll() }, [])
@@ -224,6 +227,8 @@ export default function ParentPage() {
     ])
     if (childData) {
       setChild(childData)
+      setChildForm({ name: childData.name, grade: childData.grade ?? 3 })
+      setChildFormReady(true)
       const [{ data: pts }, { data: wl }, { data: sched }] = await Promise.all([
         supabase.from('points').select('total_points').eq('child_id', childData.id).single(),
         supabase.from('wishlists').select('id, product_id').eq('child_id', childData.id),
@@ -275,6 +280,14 @@ export default function ParentPage() {
   function removeFromCart(id: string) { setCart(prev => prev.filter(i => i.product.id !== id)) }
 
 
+  async function saveChildProfile() {
+    if (!child) return
+    await supabase.from('children')
+      .update({ name: childForm.name, grade: childForm.grade })
+      .eq('id', child.id)
+    setChild(prev => prev ? { ...prev, ...childForm } : prev)
+    showToast('Profil mis à jour.')
+  }
   async function handleCheckout() {
     if (!child || !cart.length) return
     setCheckLoading(true)
@@ -507,6 +520,40 @@ export default function ParentPage() {
               </div>
             )}
           </Card>
+
+            <SectionTitle>Profil de {child?.name}</SectionTitle>
+            <Card style={{ marginBottom:22 }}>
+              <TextInput
+                label="Prénom"
+                value={childForm.name}
+                onChange={v => setChildForm(p => ({ ...p, name: v }))}
+                placeholder="Prénom de l'enfant"
+              />
+              <div style={{ marginBottom:14 }}>
+                <Label>Niveau scolaire</Label>
+                <select
+                  value={childForm.grade}
+                  onChange={e => setChildForm(p => ({ ...p, grade: Number(e.target.value) }))}
+                  style={{ width:'100%', background:C.white, border:`1px solid ${C.borderDark}`, borderRadius:10, padding:'10px 12px', color:C.text, fontSize:13, fontFamily:'var(--font-jakarta)', outline:'none', boxSizing:'border-box' as const }}
+                >
+                  {[3,4,5,6,7,8,9,10,11].map(g => (
+                    <option key={g} value={g}>
+                      {g <= 6 ? `${g}e année du primaire` : `Secondaire ${g - 6}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={saveChildProfile}
+                style={{ width:'100%', background:C.navy, border:'none', borderRadius:10, padding:'11px 0', color:C.gold, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}
+              >
+                Sauvegarder
+              </button>
+            </Card>
+
+
+
+
 
 
           <SectionTitle>Informations du compte</SectionTitle>

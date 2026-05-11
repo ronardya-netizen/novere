@@ -12,14 +12,14 @@ import OrdersAdmin from './components/OrdersAdmin'
 
 
 const TABS = [
-  { id: 'products',    label: 'Produits',   icon: '🛍️' },
+  { id: 'products',    label: 'Produits',     icon: '🛍️' },
   { id: 'users',       label: 'Utilisateurs', icon: '👥' },
-  { id: 'orders',      label: 'Commandes',  icon: '📦' },
-  { id: 'mentors',     label: 'Mentors',    icon: '🌟' },
-  { id: 'articles',    label: 'Articles',   icon: '🦸' },
-  { id: 'gifts',       label: 'Cadeaux',    icon: '🎁' },
-  { id: 'sessions',    label: 'Sessions',   icon: '📅' },
-  { id: 'redemptions', label: 'Demandes',   icon: '🔔' },
+  { id: 'orders',      label: 'Commandes',    icon: '📦' },
+  { id: 'mentors',     label: 'Mentors',      icon: '🌟' },
+  { id: 'articles',    label: 'Articles',     icon: '🦸' },
+  { id: 'gifts',       label: 'Cadeaux',      icon: '🎁' },
+  { id: 'sessions',    label: 'Sessions',     icon: '📅' },
+  { id: 'redemptions', label: 'Demandes',     icon: '🔔' },
 ]
 
 
@@ -27,19 +27,17 @@ type AdminUser = { id: string; email: string; full_name: string }
 
 
 export default function AdminPage() {
-  const [phase,    setPhase]    = useState<'checking'|'login'|'authorized'|'unauthorized'>('checking')
+  const [phase,    setPhase]    = useState<'checking'|'login'|'reset'|'authorized'|'unauthorized'>('checking')
   const [admin,    setAdmin]    = useState<AdminUser | null>(null)
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
+  const [success,  setSuccess]  = useState('')
   const [loading,  setLoading]  = useState(false)
   const [tab,      setTab]      = useState('products')
 
 
-  // Check if already logged in with admin role
-  useEffect(() => {
-    checkSession()
-  }, [])
+  useEffect(() => { checkSession() }, [])
 
 
   async function checkSession() {
@@ -51,12 +49,7 @@ export default function AdminPage() {
 
   async function checkRole(userId: string, userEmail: string) {
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, full_name')
-      .eq('id', userId)
-      .single()
-
-
+      .from('profiles').select('role, full_name').eq('id', userId).single()
     if (profile?.role === 'admin') {
       setAdmin({ id: userId, email: userEmail, full_name: profile.full_name ?? '' })
       setPhase('authorized')
@@ -68,41 +61,47 @@ export default function AdminPage() {
 
   async function handleLogin() {
     if (!email || !password) return
-    setLoading(true)
-    setError('')
-
-
+    setLoading(true); setError('')
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
-
     if (authError || !data.user) {
       setError('Identifiants incorrects. Veuillez réessayer.')
-      setLoading(false)
-      return
+      setLoading(false); return
     }
-
-
     await checkRole(data.user.id, data.user.email ?? '')
+    setLoading(false)
+  }
+
+
+  async function handleReset() {
+    if (!email) return
+    setLoading(true); setError(''); setSuccess('')
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/update-password`,
+    })
+    if (err) setError('Impossible d\'envoyer le courriel.')
+    else setSuccess('Lien de réinitialisation envoyé à ' + email)
     setLoading(false)
   }
 
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    setAdmin(null)
-    setPhase('login')
-    setEmail('')
-    setPassword('')
+    setAdmin(null); setPhase('login'); setEmail(''); setPassword('')
   }
 
 
-  // ── CHECKING ──────────────────────────────────────────────────────
-  if (phase === 'checking') return (
-    <div style={{ minHeight:'100vh', background:'#0B1F4B' }} />
-  )
+  const inputStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 10,
+    background: 'rgba(255,255,255,.05)', borderRadius: 14,
+    padding: '12px 16px', border: '1px solid rgba(255,255,255,.08)',
+  }
 
 
-  // ── UNAUTHORIZED ──────────────────────────────────────────────────
+  // ── CHECKING ──
+  if (phase === 'checking') return <div style={{ minHeight:'100vh', background:'#0B1F4B' }} />
+
+
+  // ── UNAUTHORIZED ──
   if (phase === 'unauthorized') return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(145deg, #040D1F 0%, #0B1F4B 60%, #06122E 100%)', fontFamily:'var(--font-jakarta)' }}>
       <div style={{ textAlign:'center', padding:32 }}>
@@ -117,51 +116,40 @@ export default function AdminPage() {
   )
 
 
-  // ── LOGIN ─────────────────────────────────────────────────────────
-  if (phase === 'login') return (
+  // ── LOGIN / RESET ──
+  if (phase === 'login' || phase === 'reset') return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(145deg, #040D1F 0%, #0B1F4B 60%, #06122E 100%)', fontFamily:'var(--font-jakarta)', padding:24 }}>
       <div style={{ position:'fixed', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(37,99,235,.2) 0%, transparent 70%)', top:'10%', right:'5%', pointerEvents:'none' }} />
       <div style={{ position:'fixed', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(251,191,36,.1) 0%, transparent 70%)', bottom:'15%', left:'8%', pointerEvents:'none' }} />
 
 
       <div style={{ width:'100%', maxWidth:400 }}>
-
-
-        {/* Logo */}
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:32 }}>
-          <img src="/novere_logo.png" alt="NOVERE" style={{ width:80, height:80, objectFit:'contain', display:'block', margin:'0 auto 16px' }} />
           <h1 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:32, fontWeight:700, letterSpacing:2 }}>NOVERE</h1>
-          <p style={{ color:'rgba(255,255,255,.35)', fontSize:13, marginTop:4 }}>Panneau d'administration</p>
+          <p style={{ color:'rgba(255,255,255,.35)', fontSize:13, marginTop:4 }}>
+            {phase === 'reset' ? 'Réinitialiser le mot de passe' : 'Panneau d\'administration'}
+          </p>
         </div>
 
 
-        {/* Form */}
-        <div style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)', borderRadius:28, padding:32, backdropFilter:'blur(20px)', display:'flex', flexDirection:'column', gap:12 }}>
+        <div style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)', borderRadius:28, padding:32, backdropFilter:'blur(20px)', display:'flex', flexDirection:'column', gap:14 }}>
 
 
-          <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(255,255,255,.05)', borderRadius:14, padding:'12px 16px', border:'1px solid rgba(255,255,255,.08)' }}>
+          <div style={inputStyle}>
             <span style={{ fontSize:16 }}>📧</span>
-            <input
-              type="email"
-              placeholder="Adresse courriel"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:14, fontFamily:'var(--font-jakarta)', outline:'none' }}
-            />
+            <input type="email" placeholder="Adresse courriel" value={email} onChange={e => setEmail(e.target.value)}
+              style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:14, fontFamily:'var(--font-jakarta)', outline:'none' }} />
           </div>
 
 
-          <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(255,255,255,.05)', borderRadius:14, padding:'12px 16px', border:'1px solid rgba(255,255,255,.08)' }}>
-            <span style={{ fontSize:16 }}>🔒</span>
-            <input
-              type="password"
-              placeholder="Mot de passe"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:14, fontFamily:'var(--font-jakarta)', outline:'none' }}
-            />
-          </div>
+          {phase === 'login' && (
+            <div style={inputStyle}>
+              <span style={{ fontSize:16 }}>🔒</span>
+              <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:14, fontFamily:'var(--font-jakarta)', outline:'none' }} />
+            </div>
+          )}
 
 
           {error && (
@@ -171,25 +159,43 @@ export default function AdminPage() {
           )}
 
 
+          {success && (
+            <div style={{ background:'rgba(34,197,94,.15)', border:'1px solid rgba(34,197,94,.3)', borderRadius:12, padding:'10px 14px' }}>
+              <p style={{ color:'#86EFAC', fontSize:13, fontWeight:600 }}>{success}</p>
+            </div>
+          )}
+
+
           <button
-            onClick={handleLogin}
-            disabled={loading || !email || !password}
-            style={{ width:'100%', padding:14, background: email && password ? '#FBBF24' : 'rgba(255,255,255,.1)', color: email && password ? '#0B1F4B' : 'rgba(255,255,255,.3)', border:'none', borderRadius:12, fontWeight:800, fontSize:15, cursor: email && password ? 'pointer' : 'default', fontFamily:'var(--font-jakarta)', transition:'all .2s' }}
+            onClick={phase === 'reset' ? handleReset : handleLogin}
+            disabled={loading || !email || (phase === 'login' && !password)}
+            style={{ width:'100%', padding:14, background: email ? '#FBBF24' : 'rgba(255,255,255,.1)', color: email ? '#0B1F4B' : 'rgba(255,255,255,.3)', border:'none', borderRadius:12, fontWeight:800, fontSize:15, cursor: email ? 'pointer' : 'default', fontFamily:'var(--font-jakarta)', transition:'all .2s' }}
           >
-            {loading ? 'Connexion...' : 'Entrer →'}
+            {loading ? 'Chargement...' : phase === 'reset' ? 'Envoyer le lien →' : 'Entrer →'}
           </button>
+
+
+          {phase === 'login' && (
+            <button onClick={() => { setPhase('reset'); setError(''); setSuccess('') }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.35)', fontSize:13, cursor:'pointer', fontFamily:'var(--font-jakarta)', textDecoration:'underline' }}>
+              Mot de passe oublié?
+            </button>
+          )}
+
+
+          {phase === 'reset' && (
+            <button onClick={() => { setPhase('login'); setError(''); setSuccess('') }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.35)', fontSize:13, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}>
+              ← Retour à la connexion
+            </button>
+          )}
         </div>
       </div>
     </div>
   )
 
 
-  // ── ADMIN PANEL ───────────────────────────────────────────────────
+  // ── ADMIN PANEL ──
   return (
     <div style={{ minHeight:'100vh', background:'#F4F7FF', fontFamily:'var(--font-jakarta)' }}>
-
-
-      {/* Header */}
       <div style={{ background:'#0B1F4B', padding:'14px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'2px solid rgba(251,191,36,.2)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <img src="/novere_logo.png" alt="NOVERE" style={{ width:44, height:44, objectFit:'contain' }} />
@@ -209,7 +215,6 @@ export default function AdminPage() {
       </div>
 
 
-      {/* Tabs */}
       <div style={{ background:'#fff', borderBottom:'1px solid #E2E8F0', padding:'0 32px', display:'flex', gap:4, overflowX:'auto' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{ padding:'16px 20px', border:'none', background:'transparent', color: tab===t.id ? '#0B1F4B' : '#94A3B8', fontWeight: tab===t.id ? 700 : 500, fontSize:14, cursor:'pointer', borderBottom: tab===t.id ? '2px solid #FBBF24' : '2px solid transparent', fontFamily:'var(--font-jakarta)', transition:'all .2s', whiteSpace:'nowrap' }}>
@@ -219,7 +224,6 @@ export default function AdminPage() {
       </div>
 
 
-      {/* Content */}
       <div style={{ padding:32, maxWidth:1100, margin:'0 auto' }}>
         {tab === 'products'    && <ProductsAdmin />}
         {tab === 'users'       && <UsersAdmin />}

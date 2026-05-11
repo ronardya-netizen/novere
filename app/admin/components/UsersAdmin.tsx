@@ -25,23 +25,23 @@ type User = {
 
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Gratuit', individual: 'Individuel', family: 'Famille', user: 'Gratuit',
+  free: 'Gratuit', monthly: 'Mensuel', annual: 'Annuel', user: 'Gratuit',
 }
 const PLAN_COLORS: Record<string, { bg: string; color: string }> = {
-  free:       { bg:'#F3F4F6',   color:'#6B7280'  },
-  user:       { bg:'#F3F4F6',   color:'#6B7280'  },
-  individual: { bg:C.goldDim,   color:C.navy     },
-  family:     { bg:C.greenBg,   color:C.green    },
+  free:    { bg:'#F3F4F6', color:'#6B7280' },
+  user:    { bg:'#F3F4F6', color:'#6B7280' },
+  monthly: { bg:C.goldDim, color:C.navy    },
+  annual:  { bg:C.greenBg, color:C.green   },
 }
 
 
 export default function UsersAdmin() {
-  const [users,   setUsers]   = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search,  setSearch]  = useState('')
-  const [filter,  setFilter]  = useState('all')
-  const [toast,   setToast]   = useState('')
-  const [expanded,setExpanded]= useState<string | null>(null)
+  const [users,    setUsers]    = useState<User[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+  const [filter,   setFilter]   = useState('all')
+  const [toast,    setToast]    = useState('')
+  const [expanded, setExpanded] = useState<string | null>(null)
 
 
   useEffect(() => { load() }, [])
@@ -49,9 +49,6 @@ export default function UsersAdmin() {
 
   async function load() {
     setLoading(true)
-
-
-    // Get all profiles
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, full_name, plan, created_at')
@@ -62,8 +59,6 @@ export default function UsersAdmin() {
     if (!profiles) { setLoading(false); return }
 
 
-    // Get auth emails via admin API — using service role not available client-side
-    // Instead join with children and points
     const result: User[] = await Promise.all(profiles.map(async p => {
       const [{ data: children }, { data: points }] = await Promise.all([
         supabase.from('children').select('id, name, grade, sessions_today').eq('parent_id', p.id),
@@ -71,7 +66,7 @@ export default function UsersAdmin() {
       ])
       return {
         id:         p.id,
-        email:      '', // populated below
+        email:      '',
         full_name:  p.full_name ?? '',
         plan:       p.plan ?? 'free',
         created_at: p.created_at,
@@ -97,7 +92,9 @@ export default function UsersAdmin() {
 
 
   async function resetSessions(childId: string) {
-    await supabase.from('children').update({ sessions_today: 0, sessions_reset_at: new Date().toISOString().split('T')[0] }).eq('id', childId)
+    await supabase.from('children')
+      .update({ sessions_today: 0, sessions_reset_at: new Date().toISOString().split('T')[0] })
+      .eq('id', childId)
     showToast('Sessions remises à zéro.')
     await load()
   }
@@ -120,10 +117,10 @@ export default function UsersAdmin() {
 
 
   const stats = {
-    total:      users.length,
-    free:       users.filter(u => u.plan === 'free' || u.plan === 'user').length,
-    individual: users.filter(u => u.plan === 'individual').length,
-    family:     users.filter(u => u.plan === 'family').length,
+    total:   users.length,
+    free:    users.filter(u => u.plan === 'free' || u.plan === 'user').length,
+    monthly: users.filter(u => u.plan === 'monthly').length,
+    annual:  users.filter(u => u.plan === 'annual').length,
   }
 
 
@@ -138,15 +135,15 @@ export default function UsersAdmin() {
       )}
 
 
-      {/* Header + stats */}
+      {/* Stats */}
       <div style={{ marginBottom:24 }}>
         <h2 style={{ color:C.navy, fontFamily:'var(--font-fredoka)', fontSize:24, margin:'0 0 16px' }}>Utilisateurs</h2>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
           {[
-            { label:'Total comptes',     value:stats.total,      color:C.navy },
-            { label:'Plan Gratuit',      value:stats.free,       color:C.muted },
-            { label:'Plan Individuel',   value:stats.individual, color:'#D97706' },
-            { label:'Plan Famille',      value:stats.family,     color:C.green },
+            { label:'Total comptes',  value:stats.total,   color:C.navy    },
+            { label:'Plan Gratuit',   value:stats.free,    color:C.muted   },
+            { label:'Plan Mensuel',   value:stats.monthly, color:'#D97706' },
+            { label:'Plan Annuel',    value:stats.annual,  color:C.green   },
           ].map((s,i) => (
             <div key={i} style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:'14px 16px' }}>
               <p style={{ color:s.color, fontWeight:800, fontSize:22, margin:'0 0 2px', fontFamily:'var(--font-fredoka)' }}>{s.value}</p>
@@ -165,7 +162,7 @@ export default function UsersAdmin() {
             style={{ width:'100%', background:C.white, border:`1px solid ${C.border}`, borderRadius:10, padding:'9px 12px 9px 34px', color:C.text, fontSize:13, fontFamily:'var(--font-jakarta)', outline:'none', boxSizing:'border-box' as const }} />
         </div>
         <div style={{ display:'flex', gap:6 }}>
-          {[{id:'all',label:'Tous'},{id:'free',label:'Gratuit'},{id:'individual',label:'Individuel'},{id:'family',label:'Famille'}].map(f => (
+          {[{id:'all',label:'Tous'},{id:'free',label:'Gratuit'},{id:'monthly',label:'Mensuel'},{id:'annual',label:'Annuel'}].map(f => (
             <button key={f.id} onClick={() => setFilter(f.id)} style={{ background: filter===f.id ? C.navy : C.white, border:`1px solid ${filter===f.id ? C.navy : C.border}`, borderRadius:99, padding:'8px 16px', color: filter===f.id ? C.gold : C.muted, fontSize:12, fontWeight:700, cursor:'pointer', transition:'all .2s' }}>
               {f.label}
             </button>
@@ -184,15 +181,13 @@ export default function UsersAdmin() {
           <p style={{ color:C.faint, fontSize:14 }}>Aucun utilisateur trouvé.</p>
         </div>
       ) : filtered.map(u => {
-        const planStyle = PLAN_COLORS[u.plan] ?? PLAN_COLORS.free
+        const planStyle  = PLAN_COLORS[u.plan] ?? PLAN_COLORS.free
         const isExpanded = expanded === u.id
         return (
           <div key={u.id} style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, marginBottom:10, overflow:'hidden' }}>
 
 
-            {/* User row */}
             <div style={{ padding:'14px 18px', display:'flex', gap:12, alignItems:'center', cursor:'pointer' }} onClick={() => setExpanded(isExpanded ? null : u.id)}>
-              {/* Avatar */}
               <div style={{ width:40, height:40, borderRadius:'50%', background:C.navy, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <span style={{ color:C.gold, fontWeight:800, fontSize:16, fontFamily:'var(--font-fredoka)' }}>{(u.full_name || '?')[0].toUpperCase()}</span>
               </div>
@@ -209,7 +204,6 @@ export default function UsersAdmin() {
             </div>
 
 
-            {/* Expanded details */}
             {isExpanded && (
               <div style={{ borderTop:`1px solid ${C.border}`, padding:'16px 18px', background:C.bg }}>
 
@@ -217,9 +211,19 @@ export default function UsersAdmin() {
                 {/* Plan management */}
                 <div style={{ marginBottom:16 }}>
                   <p style={{ color:C.navy, fontWeight:700, fontSize:13, margin:'0 0 8px' }}>Changer le plan</p>
-                  <div style={{ display:'flex', gap:8 }}>
-                    {[{id:'free',label:'Gratuit'},{id:'individual',label:'Individuel'},{id:'family',label:'Famille'}].map(plan => (
-                      <button key={plan.id} onClick={() => changePlan(u.id, plan.id)} style={{ background: u.plan===plan.id || (u.plan==='user' && plan.id==='free') ? C.navy : C.white, border:`1px solid ${u.plan===plan.id ? C.navy : C.border}`, borderRadius:8, padding:'7px 14px', color: u.plan===plan.id || (u.plan==='user' && plan.id==='free') ? C.gold : C.muted, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                    {[
+                      { id:'free',    label:'Gratuit'  },
+                      { id:'monthly', label:'Mensuel'  },
+                      { id:'annual',  label:'Annuel'   },
+                    ].map(plan => (
+                      <button key={plan.id} onClick={() => changePlan(u.id, plan.id)} style={{
+                        background: u.plan === plan.id || (u.plan === 'user' && plan.id === 'free') ? C.navy : C.white,
+                        border: `1px solid ${u.plan === plan.id ? C.navy : C.border}`,
+                        borderRadius:8, padding:'7px 14px',
+                        color: u.plan === plan.id || (u.plan === 'user' && plan.id === 'free') ? C.gold : C.muted,
+                        fontSize:12, fontWeight:700, cursor:'pointer',
+                      }}>
                         {plan.label}
                       </button>
                     ))}
@@ -248,7 +252,6 @@ export default function UsersAdmin() {
                 )}
 
 
-                {/* Delete */}
                 <button onClick={() => deleteUser(u.id)} style={{ background:C.redBg, border:'1px solid #FCA5A5', borderRadius:8, padding:'7px 16px', color:C.red, fontSize:12, fontWeight:700, cursor:'pointer' }}>
                   Supprimer le compte
                 </button>
@@ -260,3 +263,5 @@ export default function UsersAdmin() {
     </div>
   )
 }
+
+

@@ -4,6 +4,7 @@ import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from '../layout'
+import AmbientPlayer from './AmbientPlayer'
 import {
   getTopicsForGrade,
   getSubjectLabel,
@@ -371,7 +372,6 @@ export default function AskPage() {
   const [sessionLimitReached, setSessionLimitReached] = useState(false)
 
 
-  // Tab visibility / distraction state
   const [graceLeft, setGraceLeft]     = useState(0)
   const [showGrace, setShowGrace]     = useState(false)
   const graceIntervalRef = useRef<any>(null)
@@ -549,7 +549,6 @@ export default function AskPage() {
   }
 
 
-  // ── SETUP ──────────────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
@@ -623,7 +622,6 @@ export default function AskPage() {
   )
 
 
-  // ── FLASHCARDS ──────────────────────────────────────────────────────
   if (phase === 'flashcards') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '28px 32px 32px' : '20px 20px 28px' }}>
@@ -671,13 +669,11 @@ export default function AskPage() {
   )
 
 
-  // ── CHAT ────────────────────────────────────────────────────────────
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)', position: 'relative' }}>
       {showBreak && <BreakOverlay creature={creature} palette={palette} palName={palName} lang={lang} t={t} onFinish={handleBreakFinish} />}
 
 
-      {/* Grace period banner */}
       {showGrace && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 300, background: 'linear-gradient(135deg, #EF4444, #DC2626)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'slideDown .3s ease' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -694,7 +690,6 @@ export default function AskPage() {
       )}
 
 
-      {/* Header */}
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: '14px 18px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.07)', marginTop: showGrace ? 72 : 0, transition: 'margin-top .3s' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => { setPhase('setup'); setMessages([]); setShowGrace(false); setSessionLimitReached(false); clearInterval(graceIntervalRef.current) }} style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: 'rgba(255,255,255,.5)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-jakarta)' }}>←</button>
@@ -716,11 +711,11 @@ export default function AskPage() {
               <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700, marginTop: 2 }}>{pomodoroLeft === 0 ? 'JEU!' : t.pomodoroLabel.toUpperCase()}</p>
             </div>
           )}
+          <AmbientPlayer paused={showGrace || showBreak} />
         </div>
       </div>
 
 
-      {/* Session done banner */}
       {sessionDone && (
         <div style={{ background: ptsEarned > 0 ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : '#FEF3C7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <p style={{ fontWeight: 700, color: ptsEarned > 0 ? '#065F46' : '#92400E', fontSize: 14 }}>
@@ -733,7 +728,6 @@ export default function AskPage() {
       )}
 
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {messages.map((msg, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
@@ -767,33 +761,19 @@ export default function AskPage() {
       </div>
 
 
-      {/* Input / Upgrade card */}
       <div style={{ padding: '10px 14px 20px', background: '#0B1F4B', borderTop: '1px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
-
-
-        {/* ── SESSION LIMIT REACHED ── */}
         {sessionLimitReached ? (
           <div style={{ background: 'linear-gradient(135deg, #0B1F4B, #1a3266)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 18, padding: '18px', marginBottom: 10 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 14 }}>
               <span style={{ fontSize: 24, flexShrink: 0 }}>🌙</span>
               <div>
-                <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 15, margin: '0 0 6px', fontFamily: 'var(--font-fredoka)' }}>
-                  Tu as utilisé tes 3 sessions d'aujourd'hui!
-                </p>
-                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
-                  C'est déjà une belle journée d'étude, {child.name}! Reviens demain pour continuer l'aventure avec {palName}. Tes progrès sont sauvegardés.
-                </p>
+                <p style={{ color: '#FBBF24', fontWeight: 800, fontSize: 15, margin: '0 0 6px', fontFamily: 'var(--font-fredoka)' }}>Tu as utilisé ta session gratuite d'aujourd'hui!</p>
+                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, margin: 0, lineHeight: 1.6 }}>C'est déjà une belle journée d'étude, {child.name}! Reviens demain pour continuer l'aventure avec {palName}. Tes progrès sont sauvegardés.</p>
               </div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', marginBottom: 14 }}>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px' }}>
-                Avec un plan payant, tes parents peuvent débloquer
-              </p>
-              {[
-                'Sessions Pomodoro illimitées — chaque jour, sans limite',
-                'Rapport hebdomadaire envoyé automatiquement à tes parents',
-                'Support prioritaire pour toute la famille',
-              ].map((f, i) => (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px' }}>Avec un plan payant, tes parents peuvent débloquer</p>
+              {['Sessions Pomodoro illimitées — chaque jour, sans limite', 'Rapport hebdomadaire envoyé automatiquement à tes parents', 'Support prioritaire pour toute la famille'].map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < 2 ? 8 : 0 }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ color: '#4ADE80', fontSize: 9, fontWeight: 800 }}>✓</span>
@@ -802,10 +782,7 @@ export default function AskPage() {
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => window.location.href = '/pricing'}
-              style={{ width: '100%', background: '#FBBF24', border: 'none', borderRadius: 12, padding: '13px 0', color: '#0B1F4B', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}
-            >
+            <button onClick={() => window.location.href = '/pricing'} style={{ width: '100%', background: '#FBBF24', border: 'none', borderRadius: 12, padding: '13px 0', color: '#0B1F4B', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-jakarta)' }}>
               Demande à tes parents de débloquer les sessions illimitées →
             </button>
           </div>
@@ -816,10 +793,8 @@ export default function AskPage() {
             <button onClick={sendMessage} disabled={loading || !input.trim()} style={{ width: 46, height: 46, borderRadius: 14, border: 'none', background: input.trim() ? '#FBBF24' : 'rgba(255,255,255,.08)', color: input.trim() ? '#0B1F4B' : 'rgba(255,255,255,.3)', fontSize: 18, cursor: input.trim() ? 'pointer' : 'default', flexShrink: 0, transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↑</button>
           </div>
         )}
-
-
         <button onClick={endSession} disabled={sessionDone || sessionLimitReached} style={{ width: '100%', padding: '11px', background: sessionDone || sessionLimitReached ? 'rgba(255,255,255,.05)' : pomodorosCompleted > 0 ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.15)', color: sessionDone || sessionLimitReached ? 'rgba(255,255,255,.2)' : pomodorosCompleted > 0 ? '#86EFAC' : '#FCA5A5', border: `1px solid ${sessionDone || sessionLimitReached ? 'rgba(255,255,255,.05)' : pomodorosCompleted > 0 ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)'}`, borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: sessionDone || sessionLimitReached ? 'default' : 'pointer', fontFamily: 'var(--font-jakarta)' }}>
-          {sessionDone ? 'Session terminée' : sessionLimitReached ? 'Limite atteinte pour aujourd\'hui' : pomodorosCompleted > 0 ? `Terminer · +${pomodorosCompleted * 50} pts ⭐ · ${pomodorosCompleted} Pomodoro${pomodorosCompleted > 1 ? 's' : ''}` : pomodoroOn ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (termine un Pomodoro pour les points)` : `${t.endSession} · ${Math.floor(elapsed / 60)}min`}
+          {sessionDone ? 'Session terminée' : sessionLimitReached ? "Limite atteinte pour aujourd'hui" : pomodorosCompleted > 0 ? `Terminer · +${pomodorosCompleted * 50} pts ⭐ · ${pomodorosCompleted} Pomodoro${pomodorosCompleted > 1 ? 's' : ''}` : pomodoroOn ? `${t.endSession} · ${Math.floor(elapsed / 60)}min · (termine un Pomodoro pour les points)` : `${t.endSession} · ${Math.floor(elapsed / 60)}min`}
         </button>
       </div>
 
@@ -833,3 +808,5 @@ export default function AskPage() {
     </div>
   )
 }
+
+

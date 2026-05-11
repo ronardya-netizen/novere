@@ -3,8 +3,10 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useChild } from '@/lib/ChildContext'
 import { useState, useEffect, createContext, useContext } from 'react'
 
+
 const LangContext = createContext<{ lang: 'fr' | 'cr'; setLang: (l: 'fr' | 'cr') => void }>({ lang: 'fr', setLang: () => {} })
 export const useLang = () => useContext(LangContext)
+
 
 const PALETTES: Record<string, { main: string; accent: string }> = {
   ocean:   { main: '#3B52D4', accent: '#7DD3FC' },
@@ -17,6 +19,7 @@ const PALETTES: Record<string, { main: string; accent: string }> = {
   night:   { main: '#1E293B', accent: '#C7D2FE' },
 }
 
+
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
   const path   = usePathname()
   const router = useRouter()
@@ -24,9 +27,11 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
   const [lang, setLang]       = useState<'fr' | 'cr'>('fr')
   const [isMobile, setIsMobile] = useState(true)
 
+
   const palName = child?.pal?.name || '...'
   const palId   = child?.pal?.palette || 'ocean'
   const palette = PALETTES[palId] || PALETTES.ocean
+
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -35,25 +40,26 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('resize', check)
   }, [])
 
- const tabs = [
+
+  const tabs = [
     { id: 'home',    path: '/home',          labelFr: 'Accueil',  labelCr: 'Akèy',   icon: HomeIcon    },
     { id: 'ask',     path: '/home/ask',       labelFr: palName,    labelCr: palName,  icon: PalIcon     },
     { id: 'mentors', path: '/home/mentors',   labelFr: 'Mentors',  labelCr: 'Mentor', icon: MentorIcon  },
     { id: 'quests',  path: '/home/quests',    labelFr: 'Quêtes',   labelCr: 'Kèt',    icon: QuestIcon   },
-    { id: 'shop', path: '/home/shop', labelFr: 'Mes Récompenses', labelCr: 'Rekonpans', icon: ShopIcon },
+    { id: 'shop',    path: '/home/shop',      labelFr: 'Mes Récompenses', labelCr: 'Rekonpans', icon: ShopIcon },
     { id: 'profile', path: '/home/profile',   labelFr: 'Profil',   labelCr: 'Pwofil', icon: ProfileIcon },
   ]
 
 
-
   const active = [...tabs]
-  .sort((a, b) => b.path.length - a.path.length)
-  .find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
+    .sort((a, b) => b.path.length - a.path.length)
+    .find(t => path === t.path || path.startsWith(t.path + '/'))?.id || 'home'
 
 
   return (
     <LangContext.Provider value={{ lang, setLang }}>
       <div style={{ display: 'flex', minHeight: '100vh', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
+
 
         {/* SIDEBAR — tablet/desktop */}
         {!isMobile && (
@@ -66,6 +72,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
               <img src="/novere_logo.png" alt="NOVERE" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <span style={{ fontFamily: 'var(--font-fredoka)', color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: 1.5 }}>NOVERE</span>
             </div>
+
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
               {tabs.map(t => {
@@ -89,6 +96,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
               })}
             </div>
 
+
             <div style={{ display: 'flex', background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: 4, gap: 4 }}>
               {(['fr', 'cr'] as const).map(l => (
                 <button key={l} onClick={() => setLang(l)} style={{
@@ -105,6 +113,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
+
         <div style={{
           flex: 1,
           marginLeft: isMobile ? 0 : 240,
@@ -114,6 +123,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
         }}>
           {children}
         </div>
+
 
         {/* BOTTOM NAV — mobile */}
         {isMobile && (
@@ -145,6 +155,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
               )
             })}
 
+
             <div style={{ display: 'flex', alignItems: 'center', paddingRight: 6 }}>
               <button onClick={() => setLang(lang === 'fr' ? 'cr' : 'fr')} style={{
                 background: '#F1F5F9', border: 'none', borderRadius: 10,
@@ -160,6 +171,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
     </LangContext.Provider>
   )
 }
+
 
 function HomeIcon({ color }: { color: string }) {
   return (
@@ -202,7 +214,6 @@ function ProfileIcon({ color }: { color: string }) {
     </svg>
   )
 }
-
 function ShopIcon({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -212,4 +223,5 @@ function ShopIcon({ color }: { color: string }) {
     </svg>
   )
 }
+
 

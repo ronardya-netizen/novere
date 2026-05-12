@@ -373,7 +373,7 @@ export default function OnboardingPage() {
               Chaque explorateur a besoin d'un compagnon.
             </h2>
             <p style={{ color:'rgba(255,255,255,.5)', fontSize:17, lineHeight:1.7, maxWidth:400, margin:'0 auto 48px' }}>
-              Avant de commencer, crée le tien. Il t'accompagnera dans chaque aventure, apprendra avec toi, et grandira à tes côtés.
+              Avant de commencer, crée le tien. Il t'accompagnera dans chaque aventure!
             </p>
             <div style={{ display:'flex', justifyContent:'center', gap:20, marginBottom:48 }}>
               {[

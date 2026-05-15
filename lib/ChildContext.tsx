@@ -17,7 +17,10 @@ type Child = {
   personality: string
   hero_name: string
   pal: Pal
+  assessment_completed: boolean
+  enabled_subjects: string[]
 }
+
 
 type ChildContextType = {
   child: Child | null

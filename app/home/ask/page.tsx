@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from '../layout'
 import AmbientPlayer from './AmbientPlayer'
+import ExerciseSession from './ExerciseSession'
 import {
   getTopicsForGrade,
   getSubjectLabel,
@@ -62,6 +63,11 @@ const T = {
     breakSub: 'Tu as complété un Pomodoro! Joue un peu avant de continuer.',
     breakContinue: 'Continuer la session →',
     breakScore: 'Score',
+    modeExercises: 'Exercices interactifs',
+    modeChat: 'Question libre',
+    modeExercisesDesc: 'Questions, associations, calculs',
+    modeChatDesc: 'Pose tes questions directement',
+    startExercises: 'Commencer les exercices 🎯',
   },
   cr: {
     title: 'Mande', subtitle: 'Chwazi yon sijè epi kòmanse',
@@ -82,6 +88,11 @@ const T = {
     breakSub: 'Ou fini yon Pomodoro! Jwe yon ti kras anvan ou kontinye.',
     breakContinue: 'Kontinye sesyon →',
     breakScore: 'Pwen',
+    modeExercises: 'Egzèsis entèaktif',
+    modeChat: 'Kesyon lib',
+    modeExercisesDesc: 'Kesyon, asosyasyon, kalkil',
+    modeChatDesc: 'Poze kesyon ou dirèkteman',
+    startExercises: 'Kòmanse egzèsis yo 🎯',
   },
 }
 
@@ -372,6 +383,11 @@ export default function AskPage() {
   const [sessionLimitReached, setSessionLimitReached] = useState(false)
 
 
+  // ── NEW: mode selector ──────────────────────────────────────
+  const [mode,          setMode]          = useState<'exercises'|'chat'>('exercises')
+  const [showExercises, setShowExercises] = useState(false)
+
+
   const [graceLeft, setGraceLeft]     = useState(0)
   const [showGrace, setShowGrace]     = useState(false)
   const graceIntervalRef = useRef<any>(null)
@@ -477,6 +493,26 @@ export default function AskPage() {
   const subtopics     = curriculumObj?.subtopics ?? []
 
 
+  // ── EXERCISE MODE ─────────────────────────────────────────────
+  if (showExercises) return (
+    <ExerciseSession
+      child={child}
+      subject={subject}
+      grade={grade}
+      chapter={topic}
+      palName={palName}
+      creature={creature}
+      bodyShape={child.pal?.bodyShape || 'round'}
+      palette={palette}
+      feature={child.pal?.feature || 'eyes'}
+      personality={personality}
+      lang={lang}
+      onBack={() => setShowExercises(false)}
+      onComplete={() => setShowExercises(false)}
+    />
+  )
+
+
   const startSession = () => {
     const topicStr = topic ? ` — chapitre: **${topic}**` : ''
     const greeting = lang === 'fr'
@@ -549,6 +585,7 @@ export default function AskPage() {
   }
 
 
+  // ── SETUP ─────────────────────────────────────────────────────
   if (phase === 'setup') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '32px 32px 36px' : '24px 20px 36px' }}>
@@ -562,7 +599,12 @@ export default function AskPage() {
           </div>
         </div>
       </div>
+
+
       <div style={{ padding: isWide ? '28px 32px' : '20px 18px', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+
+        {/* Subject picker */}
         <div>
           <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.subject}</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -578,6 +620,9 @@ export default function AskPage() {
           </div>
           {curriculumObj && <p style={{ color: '#94A3B8', fontSize: 11, marginTop: 8, paddingLeft: 4 }}>Programme : {curriculumObj.programLabel}</p>}
         </div>
+
+
+        {/* Chapter picker */}
         {subtopics.length > 0 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -594,27 +639,76 @@ export default function AskPage() {
             {topic && <div style={{ marginTop: 10, background: '#F0F9FF', borderRadius: 12, padding: '10px 14px', border: '1px solid #BAE6FD' }}><p style={{ color: '#0369A1', fontSize: 12, fontWeight: 600 }}>📚 {palName} se concentrera sur : <strong>{topic}</strong></p></div>}
           </div>
         )}
-        <div onClick={() => setPomodoroOn(p => !p)} style={{ background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff', border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`, borderRadius: 20, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all .2s' }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>⏱️</div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>Mode Pomodoro</p>
-            <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min focus + pause jeu · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
-          </div>
-          <div style={{ width: 48, height: 26, borderRadius: 99, background: pomodoroOn ? palette.main : '#E2E8F0', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-            <div style={{ position: 'absolute', top: 3, left: pomodoroOn ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
+
+
+        {/* ── MODE SELECTOR ── */}
+        <div>
+          <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>Mode</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {([
+              { id: 'exercises' as const, icon: '🎯', label: t.modeExercises, desc: t.modeExercisesDesc },
+              { id: 'chat'      as const, icon: '💬', label: t.modeChat,      desc: t.modeChatDesc      },
+            ]).map(m => {
+              const isActive = mode === m.id
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} style={{
+                  background: isActive ? `linear-gradient(135deg, #0B1F4B, ${palette.main})` : '#fff',
+                  border: `2px solid ${isActive ? palette.main : '#E2E8F0'}`,
+                  borderRadius: 16, padding: '14px 12px', cursor: 'pointer',
+                  textAlign: 'left', transition: 'all .2s',
+                  boxShadow: isActive ? `0 4px 16px ${palette.glow}` : 'none',
+                }}>
+                  <span style={{ fontSize: 22, display: 'block', marginBottom: 6 }}>{m.icon}</span>
+                  <p style={{ color: isActive ? '#FBBF24' : '#0B1F4B', fontWeight: 800, fontSize: 13, margin: '0 0 3px', fontFamily: 'var(--font-fredoka)' }}>
+                    {m.label}
+                  </p>
+                  <p style={{ color: isActive ? 'rgba(255,255,255,.55)' : '#64748B', fontSize: 11, margin: 0, lineHeight: 1.4 }}>
+                    {m.desc}
+                  </p>
+                </button>
+              )
+            })}
           </div>
         </div>
-        {pomodoroOn && (
-          <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <span style={{ fontSize: 22, flexShrink: 0 }}>⭐</span>
-            <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Après 25 min, une pause de 5 min avec un mini-jeu apparaît. Chaque Pomodoro = <strong>50 points</strong>.</p>
-          </div>
+
+
+        {/* Pomodoro toggle — only for chat mode */}
+        {mode === 'chat' && (
+          <>
+            <div onClick={() => setPomodoroOn(p => !p)} style={{ background: pomodoroOn ? 'rgba(59,82,212,.06)' : '#fff', border: `1.5px solid ${pomodoroOn ? palette.main : '#E2E8F0'}`, borderRadius: 20, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all .2s' }}>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: pomodoroOn ? palette.main : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>⏱️</div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 700, color: '#0B1F4B', fontSize: 15, marginBottom: 3 }}>Mode Pomodoro</p>
+                <p style={{ color: '#64748B', fontSize: 13 }}>{pomodoroOn ? 'Activé · 25 min focus + pause jeu · +50 pts' : 'Désactivé · session libre · pas de points'}</p>
+              </div>
+              <div style={{ width: 48, height: 26, borderRadius: 99, background: pomodoroOn ? palette.main : '#E2E8F0', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 3, left: pomodoroOn ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
+              </div>
+            </div>
+            {pomodoroOn && (
+              <div style={{ background: '#FEF3C7', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #FBBF24', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 22, flexShrink: 0 }}>⭐</span>
+                <p style={{ color: '#92400E', fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>Le timer démarre dès que tu cliques sur <strong>Commencer</strong>. Après 25 min, une pause de 5 min avec un mini-jeu apparaît. Chaque Pomodoro = <strong>50 points</strong>.</p>
+              </div>
+            )}
+          </>
         )}
-        <button onClick={() => setPhase('flashcards')} style={{ width: '100%', padding: '13px', background: '#fff', color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-jakarta)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          🗂️ {t.flashcardsTitle}
-        </button>
-        <button onClick={startSession} style={{ width: '100%', padding: '16px', background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`, color: '#FBBF24', border: 'none', borderRadius: 16, fontWeight: 800, fontSize: 16, cursor: 'pointer', fontFamily: 'var(--font-jakarta)', boxShadow: `0 8px 24px ${palette.glow}` }}>
-          {t.startSession}
+
+
+        {/* Flashcards — only for chat mode */}
+        {mode === 'chat' && (
+          <button onClick={() => setPhase('flashcards')} style={{ width: '100%', padding: '13px', background: '#fff', color: '#0B1F4B', border: '1.5px solid #E2E8F0', borderRadius: 16, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-jakarta)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            🗂️ {t.flashcardsTitle}
+          </button>
+        )}
+
+
+        {/* Start button */}
+        <button
+          onClick={() => mode === 'exercises' ? setShowExercises(true) : startSession()}
+          style={{ width: '100%', padding: '16px', background: `linear-gradient(135deg, #0B1F4B, ${palette.main})`, color: '#FBBF24', border: 'none', borderRadius: 16, fontWeight: 800, fontSize: 16, cursor: 'pointer', fontFamily: 'var(--font-jakarta)', boxShadow: `0 8px 24px ${palette.glow}` }}
+        >
+          {mode === 'exercises' ? t.startExercises : t.startSession}
         </button>
       </div>
       <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`}</style>
@@ -622,6 +716,7 @@ export default function AskPage() {
   )
 
 
+  // ── FLASHCARDS ────────────────────────────────────────────────
   if (phase === 'flashcards') return (
     <div style={{ minHeight: '100%', background: '#F4F7FF', fontFamily: 'var(--font-jakarta)' }}>
       <div style={{ background: 'linear-gradient(160deg, #0B1F4B, #13306B)', padding: isWide ? '28px 32px 32px' : '20px 20px 28px' }}>
@@ -669,6 +764,7 @@ export default function AskPage() {
   )
 
 
+  // ── CHAT ──────────────────────────────────────────────────────
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0B1F4B', fontFamily: 'var(--font-jakarta)', position: 'relative' }}>
       {showBreak && <BreakOverlay creature={creature} palette={palette} palName={palName} lang={lang} t={t} onFinish={handleBreakFinish} />}
@@ -808,5 +904,3 @@ export default function AskPage() {
     </div>
   )
 }
-
-

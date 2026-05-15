@@ -1,4 +1,3 @@
-'use client'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getTopicsForGrade, getSubjectLabel, isSecondary } from '@/lib/curriculum'

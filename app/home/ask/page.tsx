@@ -393,7 +393,9 @@ export default function AskPage() {
   const [mode, setMode]         = useState<'exercises'|'chat'>(initialMode)
   const [showExercises, setShowExercises] = useState(false)
 
-
+  const [isPaused, setIsPaused]       = useState(false)
+  const lastActivityRef = useRef(Date.now())
+  const pausedAtRef     = useRef<number | null>(null)
   const [graceLeft, setGraceLeft]     = useState(0)
   const [showGrace, setShowGrace]     = useState(false)
   const graceIntervalRef = useRef<any>(null)
@@ -419,9 +421,64 @@ export default function AskPage() {
 
   useEffect(() => {
     if (!sessionStart) return
-    const interval = setInterval(() => { setElapsed(Math.floor((Date.now() - sessionStart.getTime()) / 1000)) }, 1000)
+    const interval = setInterval(() => {
+      if (pausedAtRef.current !== null) return
+      setElapsed(Math.floor((Date.now() - sessionStart.getTime()) / 1000))
+    }, 1000)
     return () => clearInterval(interval)
   }, [sessionStart])
+
+  useEffect(() => {
+  if (phase !== 'chat' || sessionDone) return
+  if (showGrace || showBreak) return
+
+
+  const recordActivity = () => {
+    lastActivityRef.current = Date.now()
+    if (pausedAtRef.current !== null) {
+      const pauseDuration = Date.now() - pausedAtRef.current
+      pausedAtRef.current = null
+      setIsPaused(false)
+      setSessionStart(prev => prev ? new Date(prev.getTime() + pauseDuration) : null)
+    }
+  }
+
+
+  let lastFire = 0
+  const throttled = () => {
+    if (Date.now() - lastFire < 1000) return
+    lastFire = Date.now()
+    recordActivity()
+  }
+
+
+  window.addEventListener('mousemove',  throttled)
+  window.addEventListener('mousedown',  recordActivity)
+  window.addEventListener('keydown',    recordActivity)
+  window.addEventListener('touchstart', recordActivity)
+  window.addEventListener('scroll',     throttled, { passive: true })
+  window.addEventListener('wheel',      throttled, { passive: true })
+
+
+  const checkInterval = setInterval(() => {
+    if (pausedAtRef.current !== null) return
+    if (Date.now() - lastActivityRef.current > 5 * 60 * 1000) {
+      pausedAtRef.current = Date.now()
+      setIsPaused(true)
+    }
+  }, 10000)
+
+
+  return () => {
+    window.removeEventListener('mousemove',  throttled)
+    window.removeEventListener('mousedown',  recordActivity)
+    window.removeEventListener('keydown',    recordActivity)
+    window.removeEventListener('touchstart', recordActivity)
+    window.removeEventListener('scroll',     throttled)
+    window.removeEventListener('wheel',      throttled)
+    clearInterval(checkInterval)
+  }
+}, [phase, sessionDone, showGrace, showBreak])
 
 
   useEffect(() => {
@@ -527,7 +584,7 @@ export default function AskPage() {
     setMessages([{ role: 'assistant', content: greeting }])
     setSessionStart(new Date()); setElapsed(0); setPtsEarned(0); setSessionDone(false)
     setShowBreak(false); setBreakShown(false); setPomodorosCompleted(0)
-    setShowGrace(false); setGraceLeft(0); setSessionLimitReached(false)
+    setIsPaused(false); pausedAtRef.current = null; lastActivityRef.current = Date.now()
     clearInterval(graceIntervalRef.current)
     setPhase('chat')
   }
@@ -807,13 +864,13 @@ export default function AskPage() {
               </span>
             </div>
           </div>
-          {pomodoroOn && (
-            <div style={{ background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : 'rgba(251,191,36,.15)', border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : '#FBBF24'}`, borderRadius: 12, padding: '6px 12px', textAlign: 'center', flexShrink: 0 }}>
-              <p style={{ color: pomodoroLeft === 0 ? '#22C55E' : '#FBBF24', fontWeight: 800, fontSize: 15, fontFamily: 'var(--font-fredoka)', lineHeight: 1 }}>{pomodoroLeft === 0 ? '🎮 Pause!' : `${pomodoroMins}:${pomodoroSecs}`}</p>
-              <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700, marginTop: 2 }}>{pomodoroLeft === 0 ? 'JEU!' : t.pomodoroLabel.toUpperCase()}</p>
-            </div>
-          )}
-          <AmbientPlayer paused={showGrace || showBreak} />
+            {pomodoroOn && (
+              <div style={{ background: pomodoroLeft === 0 ? 'rgba(34,197,94,.2)' : isPaused ? 'rgba(148,163,184,.2)' : 'rgba(251,191,36,.15)', border: `1px solid ${pomodoroLeft === 0 ? '#22C55E' : isPaused ? '#94A3B8' : '#FBBF24'}`, borderRadius: 12, padding: '6px 12px', textAlign: 'center', flexShrink: 0 }}>
+                <p style={{ color: pomodoroLeft === 0 ? '#22C55E' : isPaused ? '#CBD5E1' : '#FBBF24', fontWeight: 800, fontSize: 15, fontFamily: 'var(--font-fredoka)', lineHeight: 1 }}>{pomodoroLeft === 0 ? '🎮 Pause!' : isPaused ? `⏸ ${pomodoroMins}:${pomodoroSecs}` : `${pomodoroMins}:${pomodoroSecs}`}</p>
+                <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 9, fontWeight: 700, marginTop: 2 }}>{pomodoroLeft === 0 ? 'JEU!' : isPaused ? 'EN PAUSE' : t.pomodoroLabel.toUpperCase()}</p>
+              </div>
+            )}
+          <AmbientPlayer paused={showGrace || showBreak || isPaused} />
         </div>
       </div>
 

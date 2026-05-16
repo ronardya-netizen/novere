@@ -8,7 +8,6 @@ import { useLang } from './layout'
 import TourOverlay from './TourOverlay'
 import NotificationPrompt from './NotificationPrompt'
 import StudyPlanCard from './StudyPlanCard'
-import { useSearchParams } from 'next/navigation'
 
 
 const PALETTES: Record<string, any> = {
@@ -190,7 +189,7 @@ export default function HomePage() {
   const palName   = child.pal?.name || '...'
   const hour      = new Date().getHours()
   const timeOfDay = hour < 12 ? t.morning : hour < 18 ? t.afternoon : t.evening
-  const isFreeLimit = (parentPlan === 'free' || parentPlan === 'user') && sessionsToday >= 1
+  const isFreeLimit = (parentPlan === 'free' || parentPlan === 'user') && sessionsToday >= 2
 
 
   const UpgradeBanner = () => !isFreeLimit ? null : (

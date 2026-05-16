@@ -15,6 +15,28 @@ type CartItem      = { product: Product; quantity: number }
 type Child         = { id: string; name: string; grade: number | null }
 type Schedule      = { id?: string; days: string[]; start_time: string; end_time: string; active: boolean }
 
+type AssessmentLevel = 'debutant' | 'intermediaire' | 'avance'
+
+
+const ALL_SUBJECTS = ['mathematiques', 'francais', 'histoire', 'sciences'] as const
+type SubjectId = typeof ALL_SUBJECTS[number]
+
+
+const SUBJECT_META: Record<SubjectId, { label: string; icon: string; color: string }> = {
+  mathematiques: { label: 'Mathématiques', icon: '🔢', color: '#3B52D4' },
+  francais:      { label: 'Français',       icon: '📖', color: '#DB2777' },
+  histoire:      { label: 'Histoire',        icon: '🏛️', color: '#D97706' },
+  sciences:      { label: 'Sciences',        icon: '🔬', color: '#16A34A' },
+}
+
+
+const LEVEL_META: Record<AssessmentLevel, { label: string; icon: string; color: string; bg: string }> = {
+  debutant:      { label: 'Débutant',      icon: '🌱', color: '#16A34A', bg: '#DCFCE7' },
+  intermediaire: { label: 'Intermédiaire', icon: '🌿', color: '#D97706', bg: '#FEF3C7' },
+  avance:        { label: 'Avancé',        icon: '🌳', color: '#7C3AED', bg: '#EDE9FE' },
+}
+
+
 
 const C = {
   navy:'#0B1F4B', gold:'#FBBF24',
@@ -207,6 +229,9 @@ export default function ParentPage() {
   const [pomoDur,     setPomoDur]     = useState(25)
   const [breakDur,    setBreakDur]    = useState(5)
   const [childForm, setChildForm] = useState({ name: '', grade: 3 })
+  const [enabledSubjects,   setEnabledSubjects]   = useState<SubjectId[]>(['mathematiques','francais','histoire','sciences'])
+  const [assessmentLevels,  setAssessmentLevels]  = useState<Record<string, AssessmentLevel>>({})
+  const [savingSubjects,    setSavingSubjects]    = useState(false)
   const [childFormReady, setChildFormReady] = useState(false)
 
 
@@ -222,21 +247,33 @@ export default function ParentPage() {
     setParentName(profile?.full_name ?? u.email?.split('@')[0] ?? 'Parent')
     setCurrentPlan(profile?.plan ?? 'free')
     const [{ data: childData }, { data: prods }] = await Promise.all([
-      supabase.from('children').select('id, name, grade').eq('parent_id', u.id).single(),
+      supabase.from('children').select('id, name, grade, enabled_subjects').eq('parent_id', u.id).single(),
       supabase.from('products').select('*').eq('active', true).order('created_at', { ascending: false }),
     ])
     if (childData) {
       setChild(childData)
       setChildForm({ name: childData.name, grade: childData.grade ?? 3 })
       setChildFormReady(true)
-      const [{ data: pts }, { data: wl }, { data: sched }] = await Promise.all([
+      const [{ data: pts }, { data: wl }, { data: sched }, { data: levels }] = await Promise.all([
         supabase.from('points').select('total_points').eq('child_id', childData.id).single(),
         supabase.from('wishlists').select('id, product_id').eq('child_id', childData.id),
         supabase.from('focus_schedules').select('*').eq('child_id', childData.id).single(),
+        supabase.from('child_assessments').select('subject, level').eq('child_id', childData.id),
       ])
       setPoints((pts as any)?.total_points ?? 0)
       setWishlist(wl ?? [])
       if (sched) setSchedule(sched as Schedule)
+
+
+      const enabled = (childData as any).enabled_subjects as SubjectId[] | null
+      if (enabled && enabled.length > 0) setEnabledSubjects(enabled)
+
+
+      if (levels) {
+        const map: Record<string, AssessmentLevel> = {}
+        for (const a of levels) map[a.subject] = a.level as AssessmentLevel
+        setAssessmentLevels(map)
+      }
     }
     setProducts(prods ?? [])
     setLoading(false)
@@ -288,6 +325,32 @@ export default function ParentPage() {
     setChild(prev => prev ? { ...prev, ...childForm } : prev)
     showToast('Profil mis à jour.')
   }
+
+  function toggleSubject(id: SubjectId) {
+    setEnabledSubjects(prev => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) { showToast('Au moins une matière est requise.'); return prev }
+        return prev.filter(s => s !== id)
+      }
+      return [...prev, id]
+    })
+  }
+
+
+  async function saveSubjects() {
+    if (!child) return
+    setSavingSubjects(true)
+    await supabase.from('children').update({ enabled_subjects: enabledSubjects }).eq('id', child.id)
+    // Regenerate study plan with the new subjects
+    await fetch('/api/study-plan', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ childId: child.id }),
+    })
+    showToast('Matières mises à jour.')
+    setSavingSubjects(false)
+  }
+
   async function handleCheckout() {
     if (!child || !cart.length) return
     setCheckLoading(true)
@@ -516,7 +579,15 @@ export default function ParentPage() {
             ) : (
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={() => window.location.href = '/pricing'} style={{ flex:1, background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, padding:'11px 0', color:C.navy, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}>Changer de plan</button>
-                <button style={{ flex:1, background:C.redBg, border:'1px solid #FCA5A5', borderRadius:10, padding:'11px 0', color:C.red, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}>Annuler l'abonnement</button>
+                <button onClick={async () => {
+                if (!user) return
+                if (!confirm("Annuler votre abonnement?\n\n• Vous gardez l'accès jusqu'à la fin de la période payée\n• Après ça, vous passez au plan Gratuit (1 session/jour pour 2 Pomodoros)\n• Toutes les données et points de votre enfant sont conservés\n• Vous pouvez vous réabonner à tout moment")) return
+                const res = await fetch('/api/cancel-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ userId: user.id }) })
+                const data = await res.json()
+                if (data.ok) showToast(`Abonnement annulé. Accès jusqu'au ${data.periodEnd}.`)
+                else showToast(data.error || "Erreur lors de l'annulation.")
+              }} style={{ flex:1, background:C.redBg, border:'1px solid #FCA5A5', borderRadius:10, padding:'11px 0', color:C.red, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-jakarta)' }}>Annuler l'abonnement</button>
+
               </div>
             )}
           </Card>
@@ -551,10 +622,60 @@ export default function ParentPage() {
               </button>
             </Card>
 
+          <SectionTitle>Matières actives de {child?.name}</SectionTitle>
+          <Card style={{ marginBottom:22 }}>
+            <p style={{ color:C.muted, fontSize:12, lineHeight:1.6, margin:'0 0 16px' }}>
+              Sélectionnez les matières que {child?.name} étudiera. Les exercices et le plan d'étude seront adaptés en conséquence.
+            </p>
 
 
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+              {ALL_SUBJECTS.map(id => {
+                const meta      = SUBJECT_META[id]
+                const isEnabled = enabledSubjects.includes(id)
+                const level     = assessmentLevels[id]
+                const levelInfo = level ? LEVEL_META[level] : null
+                return (
+                  <div key={id} onClick={() => toggleSubject(id)} style={{
+                    background:  isEnabled ? C.white : C.bg,
+                    border:      `2px solid ${isEnabled ? meta.color : C.border}`,
+                    borderRadius: 14, padding: '14px',
+                    cursor: 'pointer', transition: 'all .15s',
+                    opacity: isEnabled ? 1 : 0.55,
+                  }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                      <span style={{ fontSize:24 }}>{meta.icon}</span>
+                      <div style={{ width:38, height:22, borderRadius:99, background: isEnabled ? meta.color : C.border, position:'relative', flexShrink:0, transition:'background .2s' }}>
+                        <div style={{ width:16, height:16, borderRadius:'50%', background:C.white, position:'absolute', top:3, left: isEnabled ? 19 : 3, transition:'left .2s' }} />
+                      </div>
+                    </div>
+                    <p style={{ color: isEnabled ? C.navy : C.muted, fontWeight:800, fontSize:13, margin:'0 0 6px', fontFamily:'var(--font-fredoka)' }}>
+                      {meta.label}
+                    </p>
+                    {levelInfo ? (
+                      <span style={{ background:levelInfo.bg, color:levelInfo.color, fontSize:10, fontWeight:700, borderRadius:99, padding:'2px 8px', display:'inline-flex', alignItems:'center', gap:4 }}>
+                        {levelInfo.icon} {levelInfo.label}
+                      </span>
+                    ) : (
+                      <span style={{ color:C.faint, fontSize:10 }}>
+                        Niveau non évalué
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
 
 
+            <p style={{ color:C.faint, fontSize:11, margin:'0 0 12px', lineHeight:1.5 }}>
+              {enabledSubjects.length} matière{enabledSubjects.length > 1 ? 's' : ''} activée{enabledSubjects.length > 1 ? 's' : ''}. Le plan d'étude sera régénéré automatiquement.
+            </p>
+
+
+            <button onClick={saveSubjects} disabled={savingSubjects} style={{ width:'100%', background: savingSubjects ? C.faint : C.navy, border:'none', borderRadius:10, padding:'11px 0', color: savingSubjects ? C.white : C.gold, fontSize:12, fontWeight:700, cursor: savingSubjects ? 'not-allowed' : 'pointer', fontFamily:'var(--font-jakarta)' }}>
+              {savingSubjects ? 'Sauvegarde...' : 'Sauvegarder les matières'}
+            </button>
+          </Card>
 
           <SectionTitle>Informations du compte</SectionTitle>
           <Card style={{ marginBottom:22 }}>

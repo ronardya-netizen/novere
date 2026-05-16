@@ -31,7 +31,7 @@ const PLANS = [
     description: 'Essayez NOVERE sans engagement. Votre enfant a droit à une session Pomodoro complète par jour, suivie d\'un mini-jeu de pause.',
     features: [
       { label: '1 enfant',                        included: true  },
-      { label: '1 session Pomodoro / jour',        included: true  },
+      { label: '2 séances d\'études par jour',        included: true  },
       { label: 'Mini-jeu de pause inclus',         included: true  },
       { label: 'Accès au compagnon IA',            included: true  },
       { label: 'Quêtes et articles éducatifs',     included: true  },

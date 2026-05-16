@@ -48,38 +48,39 @@ export default function UsersAdmin() {
 
 
   async function load() {
-    setLoading(true)
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, plan, created_at')
-      .in('role', ['user', 'parent'])
-      .order('created_at', { ascending: false })
+  setLoading(true)
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, plan, created_at')
+    .in('role', ['user', 'parent'])
+    .order('created_at', { ascending: false })
 
 
-    if (!profiles) { setLoading(false); return }
+  if (!profiles) { setLoading(false); return }
 
 
-    const result: User[] = await Promise.all(profiles.map(async p => {
-      const [{ data: children }, { data: points }] = await Promise.all([
-        supabase.from('children').select('id, name, grade, sessions_today').eq('parent_id', p.id),
-        supabase.from('points').select('total_points').eq('child_id', p.id).single(),
-      ])
-      return {
-        id:         p.id,
-        email:      '',
-        full_name:  p.full_name ?? '',
-        plan:       p.plan ?? 'free',
-        created_at: p.created_at,
-        children:   children ?? [],
-        points:     points,
-      }
-    }))
+  const result: User[] = await Promise.all(profiles.map(async p => {
+    const { data: children } = await supabase
+      .from('children')
+      .select('id, name, grade, sessions_today')
+      .eq('parent_id', p.id)
 
 
-    setUsers(result)
-    setLoading(false)
-  }
+    return {
+      id:         p.id,
+      email:      '',
+      full_name:  p.full_name ?? '',
+      plan:       p.plan ?? 'free',
+      created_at: p.created_at,
+      children:   children ?? [],
+      points:     null,
+    }
+  }))
 
+
+  setUsers(result)
+  setLoading(false)
+}
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
 

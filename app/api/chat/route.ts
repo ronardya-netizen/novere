@@ -10,9 +10,9 @@ const client = new Anthropic()
 
 // free and user = 1 session per day, paid = unlimited
 const PLAN_LIMITS: Record<string, number> = {
-  free:    1,
-  user:    1,
-  parent:  1,
+  free:    2,
+  user:    2,
+  parent:  2,
   monthly: Infinity,
   annual:  Infinity,
 }

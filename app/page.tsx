@@ -49,7 +49,7 @@ const COPY = {
         description: 'Découvrez Novere sans engagement. Idéal pour tester la plateforme avant de s\'abonner.',
         feats: [
           { label: '1 enfant', included: true },
-          { label: '1 session Pomodoro par jour', included: true },
+          { label: '2 séances d\'étude par jour', included: true },
           { label: 'Quêtes et articles éducatifs', included: true },
           { label: 'Boutique et liste de souhaits', included: true },
           { label: 'Accès aux vidéos Mentors', included: true },

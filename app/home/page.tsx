@@ -7,6 +7,8 @@ import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from './layout'
 import TourOverlay from './TourOverlay'
 import NotificationPrompt from './NotificationPrompt'
+import StudyPlanCard from './StudyPlanCard'
+import { useSearchParams } from 'next/navigation'
 
 
 const PALETTES: Record<string, any> = {
@@ -253,23 +255,14 @@ export default function HomePage() {
       </div>
 
 
-      {/* Quest — tour target */}
+      {/* Study plan card — tour target */}
       <div style={{ padding: isWide ? '0 0' : '0 18px' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-          <h2 style={{ fontFamily:'var(--font-fredoka)', color:'#0B1F4B', fontSize:20, fontWeight:600 }}>{t.questDuJour} ⚡</h2>
-          <button onClick={() => router.push('/home/quests')} style={{ color:palette.main, fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer' }}>{t.voirTout}</button>
-        </div>
-        <div id="tour-quest" onClick={() => router.push('/home/ask')} style={{ background:`linear-gradient(135deg, #0B1F4B, ${palette.main})`, borderRadius:20, padding:'18px 20px', cursor:'pointer', position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', right:-20, bottom:-20, fontSize:90, opacity:.07 }}>⚡</div>
-          <p style={{ color:'rgba(255,255,255,.45)', fontSize:11, fontWeight:700, letterSpacing:'.07em', marginBottom:8 }}>{t.reprendre} {palName.toUpperCase()}</p>
-          <h3 style={{ fontFamily:'var(--font-fredoka)', color:'#fff', fontSize:18, marginBottom:14 }}>{t.exploration}</h3>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
-            <span style={{ color:'rgba(255,255,255,.5)', fontSize:12 }}>
-              {sessions > 0 ? `${sessions} session${sessions>1?'s':''} · ${streak} jour${streak>1?'s':''} de suite` : lang === 'fr' ? 'Commence ta première session!' : 'Kòmanse premye sesyon ou!'}
-            </span>
-            <div style={{ background:'#FBBF24', color:'#0B1F4B', borderRadius:99, padding:'6px 16px', fontSize:13, fontWeight:800 }}>{t.continuer}</div>
-          </div>
-        </div>
+        <StudyPlanCard
+          childId={child.id}
+          palName={palName}
+          palette={palette}
+          lang={lang}
+        />
       </div>
     </div>
   )

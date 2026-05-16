@@ -13,6 +13,7 @@ import {
   type GradeLevel,
   ALL_SUBJECTS,
 } from '@/lib/curriculum'
+import { useSearchParams } from 'next/navigation'
 
 
 const PALETTES: Record<string, any> = {
@@ -360,11 +361,16 @@ export default function AskPage() {
   const { lang }   = useLang()
   const t          = T[lang]
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams()
+  const initialSubject = (searchParams.get('subject') as Subject) || 'mathematiques'
+  const initialChapter = searchParams.get('chapter')
+  const initialMode    = (searchParams.get('mode') as 'exercises'|'chat') || 'exercises'
+
 
 
   const [phase, setPhase]               = useState<'setup'|'chat'|'flashcards'>('setup')
-  const [subject, setSubject]           = useState<Subject>('mathematiques')
-  const [topic, setTopic]               = useState<string | null>(null)
+  const [subject, setSubject]   = useState<Subject>(initialSubject)
+  const [topic, setTopic]       = useState<string | null>(initialChapter)
   const [pomodoroOn, setPomodoroOn]     = useState(true)
   const [messages, setMessages]         = useState<Message[]>([])
   const [input, setInput]               = useState('')
@@ -384,7 +390,7 @@ export default function AskPage() {
 
 
   // ── NEW: mode selector ──────────────────────────────────────
-  const [mode,          setMode]          = useState<'exercises'|'chat'>('exercises')
+  const [mode, setMode]         = useState<'exercises'|'chat'>(initialMode)
   const [showExercises, setShowExercises] = useState(false)
 
 

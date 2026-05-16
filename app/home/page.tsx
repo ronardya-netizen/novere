@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { PalSVG } from '@/lib/pal-svg'
 import { useLang } from './layout'
 import TourOverlay from './TourOverlay'
+import NotificationPrompt from './NotificationPrompt'
 
 
 const PALETTES: Record<string, any> = {
@@ -94,7 +95,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!loading && !child) router.push('/onboarding')
+    if (!loading && child && !child.assessment_completed) router.push('/assessment')
   }, [child, loading, router])
+
 
 
   useEffect(() => {
@@ -366,6 +369,22 @@ export default function HomePage() {
           onComplete={() => setShowTour(false)}
         />
       )}
+
+      {child && showTour === false && (
+        <NotificationPrompt
+          childId={child.id}
+          palName={palName}
+          palette={palette}
+        />
+      )}
+      {child && showTour === false && (
+        <NotificationPrompt
+          childId={child.id}
+          palName={palName}
+          palette={palette}
+        />
+      )}
+
 
 
       <style>{`

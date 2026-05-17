@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useChild } from '@/lib/ChildContext'
 import { supabase } from '@/lib/supabase'
 import { PalSVG } from '@/lib/pal-svg'
@@ -356,7 +356,7 @@ function BreakOverlay({ creature, palette, palName, lang, t, onFinish }: { creat
 }
 
 
-export default function AskPage() {
+function AskPageInner() {
   const { child }  = useChild()
   const { lang }   = useLang()
   const t          = T[lang]
@@ -965,5 +965,12 @@ export default function AskPage() {
         @keyframes slideDown{ from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
     </div>
+  )
+}
+export default function AskPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0B1F4B' }} />}>
+      <AskPageInner />
+    </Suspense>
   )
 }

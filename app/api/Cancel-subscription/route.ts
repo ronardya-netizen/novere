@@ -3,8 +3,11 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder')
 
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

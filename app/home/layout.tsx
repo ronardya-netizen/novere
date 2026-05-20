@@ -44,7 +44,6 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
   const tabs = [
     { id: 'home',    path: '/home',          labelFr: 'Accueil',  labelCr: 'Akèy',   icon: HomeIcon    },
     { id: 'ask',     path: '/home/ask',       labelFr: palName,    labelCr: palName,  icon: PalIcon     },
-    { id: 'mentors', path: '/home/mentors',   labelFr: 'Mentors',  labelCr: 'Mentor', icon: MentorIcon  },
     { id: 'quests',  path: '/home/quests',    labelFr: 'Quêtes',   labelCr: 'Kèt',    icon: QuestIcon   },
     { id: 'shop',    path: '/home/shop',      labelFr: 'Mes Récompenses', labelCr: 'Rekonpans', icon: ShopIcon },
     { id: 'profile', path: '/home/profile',   labelFr: 'Profil',   labelCr: 'Pwofil', icon: ProfileIcon },
@@ -187,15 +186,6 @@ function PalIcon({ color }: { color: string }) {
       <circle cx="9"  cy="11" r="1.5" fill={color} />
       <circle cx="15" cy="11" r="1.5" fill={color} />
       <path d="M9 15C9 15 10.5 17 12 17C13.5 17 15 15 15 15" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  )
-}
-function MentorIcon({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="4" width="20" height="14" rx="3" stroke={color} strokeWidth="1.8" fill="none" />
-      <path d="M10 9L15 12L10 15V9Z" fill={color} />
-      <path d="M8 20L12 18L16 20" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }

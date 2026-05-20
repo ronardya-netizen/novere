@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import MentorsAdmin from './components/MentorsAdmin'
 import ArticlesAdmin from './components/ArticlesAdmin'
 import GiftsAdmin from './components/GiftsAdmin'
 import SessionsAdmin from './components/SessionsAdmin'
@@ -228,7 +227,6 @@ export default function AdminPage() {
         {tab === 'products'    && <ProductsAdmin />}
         {tab === 'users'       && <UsersAdmin />}
         {tab === 'orders'      && <OrdersAdmin />}
-        {tab === 'mentors'     && <MentorsAdmin />}
         {tab === 'articles'    && <ArticlesAdmin />}
         {tab === 'gifts'       && <GiftsAdmin />}
         {tab === 'sessions'    && <SessionsAdmin />}

@@ -21,8 +21,9 @@ export default function AuthPage() {
 
     if (mode === 'reset') {
       const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      })
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
+    })
+
       if (err) setError('Impossible d\'envoyer le courriel. Vérifiez l\'adresse.')
       else setSuccess('Un lien de réinitialisation a été envoyé à votre adresse courriel.')
       setLoading(false)

@@ -55,6 +55,7 @@ export default function UsersAdmin() {
     .in('role', ['user', 'parent'])
     .order('created_at', { ascending: false })
 
+  console.log('Profiles loaded:', profiles)
 
   if (!profiles) { setLoading(false); return }
 

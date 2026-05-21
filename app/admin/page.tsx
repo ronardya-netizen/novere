@@ -49,6 +49,7 @@ export default function AdminPage() {
   async function checkRole(userId: string, userEmail: string) {
     const { data: profile } = await supabase
       .from('profiles').select('role, full_name').eq('id', userId).single()
+    console.log('Admin check:', { userId, profile })
     if (profile?.role === 'admin') {
       setAdmin({ id: userId, email: userEmail, full_name: profile.full_name ?? '' })
       setPhase('authorized')
